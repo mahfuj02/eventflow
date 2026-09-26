@@ -1,4 +1,4 @@
-import { firebaseAuth } from './firebaseAdmin'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 export interface AuthenticatedUser {
   uid: string
@@ -7,19 +7,32 @@ export interface AuthenticatedUser {
 
 export class UnauthorizedError extends Error {}
 
+const projectId = process.env.FIREBASE_PROJECT_ID
+const googleJwks = createRemoteJWKSet(
+  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'),
+)
+
 export async function verifyAuth(authHeader: string | null): Promise<AuthenticatedUser> {
   const token = authHeader?.match(/^Bearer (.+)$/)?.[1]
   if (!token) {
     throw new UnauthorizedError('Missing bearer token')
   }
-
-  const decoded = await firebaseAuth.verifyIdToken(token).catch(() => {
-    throw new UnauthorizedError('Invalid or expired token')
-  })
-
-  if (!decoded.email) {
-    throw new UnauthorizedError('Token has no email')
+  if (!projectId) {
+    throw new UnauthorizedError('Server auth is not configured')
   }
 
-  return { uid: decoded.uid, email: decoded.email }
+  const payload = await jwtVerify(token, googleJwks, {
+    issuer: `https://securetoken.google.com/${projectId}`,
+    audience: projectId,
+  })
+    .then((result) => result.payload)
+    .catch(() => {
+      throw new UnauthorizedError('Invalid or expired token')
+    })
+
+  if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+    throw new UnauthorizedError('Token missing required claims')
+  }
+
+  return { uid: payload.sub, email: payload.email }
 }

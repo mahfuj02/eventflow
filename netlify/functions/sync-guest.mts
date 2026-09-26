@@ -1,4 +1,3 @@
-import type { Config } from '@netlify/functions'
 import type { GuestDocument } from '../../shared/types/guest'
 import { getDb } from './_lib/mongo'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
@@ -36,8 +35,4 @@ export default async (req: Request): Promise<Response> => {
     }
     return new Response('Internal Server Error', { status: 500 })
   }
-}
-
-export const config: Config = {
-  path: '/.netlify/functions/sync-guest',
 }
