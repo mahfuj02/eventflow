@@ -1,0 +1,22 @@
+{
+  "name": "eventflow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@netlify/functions": "^6.0.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "mongodb": "^7.6.0",
+    "stripe": "^22.6.2"
+  }
+}
