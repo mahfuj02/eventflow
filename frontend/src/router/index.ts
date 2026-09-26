@@ -5,6 +5,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import CreateEventView from '../views/CreateEventView.vue'
 
 function waitForAuthReady(): Promise<void> {
   const { loading } = useAuth()
@@ -29,6 +30,12 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/events/new',
+      name: 'create-event',
+      component: CreateEventView,
       meta: { requiresAuth: true },
     },
   ],
