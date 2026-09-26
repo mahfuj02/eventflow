@@ -11,5 +11,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["netlify/functions/**/*.ts", "shared/**/*.ts"]
+  "include": ["netlify/functions/**/*.ts", "netlify/functions/**/*.mts", "shared/**/*.ts"]
 }

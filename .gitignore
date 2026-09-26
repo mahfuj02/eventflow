@@ -13,6 +13,7 @@ frontend/.env.local
 dist/
 frontend/dist/
 .netlify/
+deno.lock
 
 # Firebase
 firebase-debug.log

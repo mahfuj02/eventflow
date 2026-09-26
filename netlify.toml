@@ -5,3 +5,5 @@
 
 [dev]
   framework = "vite"
+  command = "npm --prefix frontend run dev"
+  targetPort = 5173
