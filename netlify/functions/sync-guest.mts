@@ -33,6 +33,7 @@ export default async (req: Request): Promise<Response> => {
     if (err instanceof UnauthorizedError) {
       return new Response(err.message, { status: 401 })
     }
+    console.error('sync-guest failed:', err)
     return new Response('Internal Server Error', { status: 500 })
   }
 }
