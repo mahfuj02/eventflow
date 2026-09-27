@@ -96,7 +96,7 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
               v-model="search"
               type="search"
               placeholder="Search events, venues, or cities"
-              class="w-full rounded-lg border-0 px-4 py-3 text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-teal"
+              class="w-full rounded-lg border-0 bg-white px-4 py-3 text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-teal"
             />
             <button
               type="submit"
@@ -165,9 +165,9 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
       </div>
     </section>
 
-    <section class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+    <section class="sticky bottom-0 z-10 bg-ivory px-4 pb-6 pt-4 sm:px-6">
       <div
-        class="flex flex-col items-start gap-4 rounded-2xl bg-[#e3f5ee] px-6 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-10"
+        class="mx-auto flex max-w-6xl flex-col items-start gap-4 rounded-2xl bg-[#e3f5ee] px-6 py-8 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] sm:flex-row sm:items-center sm:justify-between sm:px-10"
       >
         <div>
           <h2 class="font-serif text-xl font-semibold text-ink">Bring your event to EventFlow</h2>
