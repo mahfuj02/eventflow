@@ -23,15 +23,44 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main>
-    <h1>Order confirmation</h1>
-    <p v-if="error" role="alert">{{ error }}</p>
-    <div v-else-if="result && result.ticket">
-      <p>Payment successful! Your ticket is confirmed.</p>
-      <p>Ticket code: <strong>{{ result.ticket.code }}</strong></p>
+  <main class="flex min-h-[calc(100svh-65px)] items-center justify-center bg-gray-50 px-4">
+    <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+      <template v-if="error">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <h1 class="mt-4 text-lg font-semibold text-gray-900">Something went wrong</h1>
+        <p role="alert" class="mt-2 text-sm text-red-600">{{ error }}</p>
+      </template>
+
+      <template v-else-if="result && result.ticket">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </div>
+        <h1 class="mt-4 text-lg font-semibold text-gray-900">You're all set!</h1>
+        <p class="mt-2 text-sm text-gray-500">Your ticket has been confirmed.</p>
+        <div class="mt-6 rounded-lg bg-gray-50 px-4 py-3">
+          <p class="text-xs uppercase tracking-wide text-gray-400">Ticket code</p>
+          <p class="mt-1 font-mono text-lg font-semibold text-gray-900">{{ result.ticket.code }}</p>
+        </div>
+      </template>
+
+      <template v-else-if="result">
+        <h1 class="mt-4 text-lg font-semibold text-gray-900">Payment successful</h1>
+        <p class="mt-2 text-sm text-gray-500">No ticket was found for this order.</p>
+      </template>
+
+      <template v-else>
+        <p class="text-sm text-gray-500">Confirming your order...</p>
+      </template>
+
+      <RouterLink to="/" class="mt-6 inline-block text-sm font-medium text-gray-900 underline">
+        Back to events
+      </RouterLink>
     </div>
-    <p v-else-if="result">Payment successful, but no ticket was found.</p>
-    <p v-else>Confirming your order...</p>
-    <p><RouterLink to="/">Back to events</RouterLink></p>
   </main>
 </template>
