@@ -1,4 +1,5 @@
 import type { EventDocument, TicketType } from '../../shared/types/event'
+import type { GuestDocument } from '../../shared/types/guest'
 import { getDb } from './_lib/mongo'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
@@ -52,6 +53,13 @@ export default async (req: Request): Promise<Response> => {
     const user = await verifyAuth(req.headers.get('authorization'))
     const body = (await req.json()) as CreateEventBody
 
+    const db = await getDb()
+    const guests = db.collection<Omit<GuestDocument, '_id'>>('guests')
+    const guest = await guests.findOne({ firebaseUid: user.uid })
+    if (guest?.role !== 'host') {
+      return new Response('You must be an approved host to create events', { status: 403 })
+    }
+
     const error = validate(body)
     if (error) {
       return new Response(error, { status: 400 })
@@ -68,7 +76,7 @@ export default async (req: Request): Promise<Response> => {
 
     const now = new Date().toISOString()
     const event: Omit<EventDocument, '_id'> = {
-      hostId: user.uid,
+      organizerId: user.uid,
       title: (body.title as string).trim(),
       description: (body.description as string).trim(),
       venue: (body.venue as string).trim(),
@@ -81,7 +89,6 @@ export default async (req: Request): Promise<Response> => {
       ...(isNonEmptyString(body.category) ? { category: body.category.trim() } : {}),
     }
 
-    const db = await getDb()
     const collection = db.collection<Omit<EventDocument, '_id'>>('events')
     const result = await collection.insertOne(event)
 

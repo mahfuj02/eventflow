@@ -7,6 +7,7 @@ export interface SyncedGuest {
   firebaseUid: string
   email: string
   name: string
+  role: 'guest' | 'host'
 }
 
 async function authedFetch(path: string, init?: RequestInit): Promise<Response> {
@@ -135,4 +136,35 @@ export async function getEventGuests(eventId: string): Promise<EventGuestsRespon
     `/.netlify/functions/get-event-guests?eventId=${encodeURIComponent(eventId)}`,
   )
   return response.json() as Promise<EventGuestsResponse>
+}
+
+export interface HostApplicationInput {
+  orgName: string
+  category: string
+  expectedAttendees: string
+  contactName: string
+  role: string
+  email: string
+  phone: string
+  message: string
+}
+
+export interface HostApplication extends HostApplicationInput {
+  _id: string
+  userId: string
+  status: 'pending' | 'approved' | 'rejected'
+}
+
+export async function submitHostApplication(input: HostApplicationInput): Promise<HostApplication> {
+  const response = await authedFetch('/.netlify/functions/submit-host-application', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  return response.json() as Promise<HostApplication>
+}
+
+export async function getMyHostApplication(): Promise<HostApplication | null> {
+  const response = await authedFetch('/.netlify/functions/get-my-host-application')
+  return response.json() as Promise<HostApplication | null>
 }

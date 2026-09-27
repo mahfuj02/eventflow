@@ -20,6 +20,7 @@ export default async (req: Request): Promise<Response> => {
           firebaseUid: user.uid,
           email: user.email,
           name: user.email.split('@')[0],
+          role: 'guest',
           createdAt: now,
         },
         $set: { updatedAt: now },

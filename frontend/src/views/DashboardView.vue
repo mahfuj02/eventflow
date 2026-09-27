@@ -2,7 +2,15 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { syncGuest, getMyEvents, getMyTickets, type SyncedGuest, type MyTicketSummary } from '../lib/api'
+import {
+  syncGuest,
+  getMyEvents,
+  getMyTickets,
+  getMyHostApplication,
+  type SyncedGuest,
+  type MyTicketSummary,
+  type HostApplication,
+} from '../lib/api'
 import type { EventDocument } from '../../../shared/types/event'
 
 const { signOutUser } = useAuth()
@@ -13,6 +21,7 @@ const events = ref<EventDocument[]>([])
 const eventsError = ref<string | null>(null)
 const tickets = ref<MyTicketSummary[]>([])
 const ticketsError = ref<string | null>(null)
+const hostApplication = ref<HostApplication | null>(null)
 
 onMounted(async () => {
   try {
@@ -31,6 +40,12 @@ onMounted(async () => {
     tickets.value = await getMyTickets()
   } catch (err) {
     ticketsError.value = err instanceof Error ? err.message : 'Failed to load tickets'
+  }
+
+  try {
+    hostApplication.value = await getMyHostApplication()
+  } catch {
+    // non-critical, leave as null (treated as "no application yet")
   }
 })
 
@@ -71,7 +86,10 @@ function formatPrice(cents: number, currency: string): string {
 
     <section>
       <h2>Your events</h2>
-      <RouterLink to="/events/new">Create event</RouterLink>
+      <RouterLink v-if="guest?.role === 'host'" to="/events/new">Create event</RouterLink>
+      <p v-else-if="hostApplication?.status === 'pending'">Host application pending review.</p>
+      <p v-else-if="hostApplication?.status === 'rejected'">Host application was not approved.</p>
+      <RouterLink v-else to="/apply-to-host">Apply to host</RouterLink>
 
       <p v-if="eventsError" role="alert">{{ eventsError }}</p>
       <p v-else-if="events.length === 0">No events yet.</p>

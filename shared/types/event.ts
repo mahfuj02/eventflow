@@ -12,7 +12,7 @@ export interface TicketType {
 }
 
 export interface EventDocument extends MongoDocument {
-  hostId: string;
+  organizerId: string;
   title: string;
   description: string;
   venue: string;

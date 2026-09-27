@@ -177,7 +177,7 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
           </p>
         </div>
         <RouterLink
-          to="/signup"
+          to="/apply-to-host"
           class="shrink-0 rounded-md bg-teal px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-dark"
         >
           Apply to host →

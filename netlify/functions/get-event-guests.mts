@@ -26,7 +26,7 @@ export default async (req: Request): Promise<Response> => {
     if (!event) {
       return new Response('Event not found', { status: 404 })
     }
-    if (event.hostId !== user.uid) {
+    if (event.organizerId !== user.uid) {
       return new Response('You do not own this event', { status: 403 })
     }
 

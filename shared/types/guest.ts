@@ -7,4 +7,5 @@ export interface GuestDocument extends MongoDocument {
   phone?: string;
   notes?: string;
   tags?: string[];
+  role: 'guest' | 'host';
 }
