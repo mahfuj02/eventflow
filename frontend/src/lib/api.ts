@@ -1,4 +1,4 @@
-import type { EventDocument } from '../../../shared/types/event'
+import type { EventDocument, TicketType } from '../../../shared/types/event'
 import type { OrderDocument } from '../../../shared/types/order'
 import type { TicketDocument } from '../../../shared/types/ticket'
 import { auth } from './firebase'
@@ -104,4 +104,34 @@ export interface MyTicketSummary {
 export async function getMyTickets(): Promise<MyTicketSummary[]> {
   const response = await authedFetch('/.netlify/functions/get-my-tickets')
   return response.json() as Promise<MyTicketSummary[]>
+}
+
+export interface EventGuestRow {
+  ticketId: string
+  code: string
+  status: TicketDocument['status']
+  purchasedAt: string
+  guestName: string
+  guestEmail: string
+  ticketTypeName: string
+  price: number
+  currency: string
+}
+
+export interface EventGuestsResponse {
+  event: {
+    title: string
+    venue: string
+    startsAt: string
+    endsAt: string
+    ticketTypes: TicketType[]
+  }
+  guests: EventGuestRow[]
+}
+
+export async function getEventGuests(eventId: string): Promise<EventGuestsResponse> {
+  const response = await authedFetch(
+    `/.netlify/functions/get-event-guests?eventId=${encodeURIComponent(eventId)}`,
+  )
+  return response.json() as Promise<EventGuestsResponse>
 }

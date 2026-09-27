@@ -86,6 +86,8 @@ function formatPrice(cents: number, currency: string): string {
             {{ ticket.name }}: {{ formatPrice(ticket.price, ticket.currency) }}
             ({{ ticket.quantitySold }}/{{ ticket.quantityTotal }} sold)
           </span>
+          <br />
+          <RouterLink :to="`/events/${event._id}/guests`">View guests</RouterLink>
         </li>
       </ul>
     </section>
