@@ -30,14 +30,14 @@ onMounted(async () => {
 })
 
 function formatPrice(cents: number, currency: string): string {
-  return `${(cents / 100).toFixed(2)} ${currency.toUpperCase()}`
+  return `$${(cents / 100).toFixed(2)} ${currency.toUpperCase()}`
 }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
-    weekday: 'short',
     month: 'short',
     day: 'numeric',
+    year: 'numeric',
   })
 }
 
@@ -60,59 +60,71 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
 </script>
 
 <template>
-  <main class="min-h-[calc(100svh-65px)] bg-gray-50">
-    <section class="bg-gray-900 px-4 py-16 text-center sm:px-6">
-      <h1 class="text-3xl font-bold text-white sm:text-4xl">Find your next event</h1>
-      <p class="mx-auto mt-3 max-w-xl text-gray-300">
-        Browse events and get your ticket in a couple of clicks.
-      </p>
-      <div class="mx-auto mt-8 max-w-lg">
-        <input
-          v-model="search"
-          type="search"
-          placeholder="Search by event or venue..."
-          class="w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-white"
-        />
+  <main class="min-h-[calc(100svh-65px)] bg-ivory">
+    <section class="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+      <div class="rounded-2xl bg-ink px-6 py-16 text-center sm:px-12">
+        <h1 class="font-serif text-3xl font-semibold text-white sm:text-5xl">
+          Discover events worth showing up for
+        </h1>
+        <p class="mx-auto mt-4 max-w-xl text-gray-300">
+          Concerts, meetups, and workshops — browse what's happening and grab your ticket in a
+          few clicks.
+        </p>
+        <form class="mx-auto mt-8 flex max-w-lg gap-2" @submit.prevent>
+          <input
+            v-model="search"
+            type="search"
+            placeholder="Search events or venues"
+            class="w-full rounded-lg border-0 px-4 py-3 text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-teal"
+          />
+          <button
+            type="submit"
+            class="shrink-0 rounded-lg bg-teal px-5 py-3 text-sm font-semibold text-white hover:bg-teal-dark"
+          >
+            Search
+          </button>
+        </form>
       </div>
     </section>
 
     <section class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <p v-if="error" role="alert" class="text-red-600">{{ error }}</p>
-      <p v-else-if="filteredEvents.length === 0" class="text-gray-500">
+      <h2 class="font-serif text-xl font-semibold text-ink">Upcoming events</h2>
+
+      <p v-if="error" role="alert" class="mt-4 text-red-600">{{ error }}</p>
+      <p v-else-if="filteredEvents.length === 0" class="mt-4 text-ink-soft">
         {{ events.length === 0 ? 'No events yet.' : 'No events match your search.' }}
       </p>
 
-      <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-else class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <article
           v-for="event in filteredEvents"
           :key="event._id"
-          class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          class="flex flex-col overflow-hidden rounded-xl border border-card-border bg-white"
         >
-          <div class="flex h-32 items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
-            <svg class="h-10 w-10 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 3v2m0 3v2M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2Z" />
+          <div class="flex h-44 items-center justify-center bg-[#efece4]">
+            <svg class="h-8 w-8 text-ink-soft/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3 4.5h18a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 18V6A1.5 1.5 0 0 1 3 4.5Zm12 5.25a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
             </svg>
           </div>
 
           <div class="flex flex-1 flex-col p-5">
-            <h2 class="text-lg font-semibold text-gray-900">{{ event.title }}</h2>
-            <p class="mt-1 text-sm text-gray-500">
+            <h3 class="font-semibold text-ink">{{ event.title }}</h3>
+            <p class="mt-1 text-sm text-ink-soft">
               {{ event.venue }} · {{ formatDate(event.startsAt) }}
             </p>
-            <p class="mt-3 line-clamp-2 flex-1 text-sm text-gray-600">{{ event.description }}</p>
 
             <div
               v-for="ticket in event.ticketTypes"
               :key="ticket.id"
-              class="mt-4 flex items-center justify-between border-t border-gray-100 pt-4"
+              class="mt-4 flex items-center justify-between border-t border-card-border pt-4"
             >
-              <span class="text-sm font-medium text-gray-900">
+              <span class="text-sm font-medium text-ink">
                 {{ formatPrice(ticket.price, ticket.currency) }}
               </span>
               <button
                 type="button"
                 :disabled="ticket.quantitySold >= ticket.quantityTotal || buyingTicketTypeId === ticket.id"
-                class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                class="rounded-md bg-teal px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-dark disabled:cursor-not-allowed disabled:bg-gray-300"
                 @click="handleBuy(event._id, ticket.id)"
               >
                 {{ ticket.quantitySold >= ticket.quantityTotal ? 'Sold out' : 'Buy ticket' }}

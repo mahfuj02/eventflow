@@ -1,6 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --color-ivory: #f7f5f0;
+  --color-ink: #1c1b19;
+  --color-ink-soft: #6b6a65;
+  --color-teal: #0f6e56;
+  --color-teal-dark: #085041;
+  --color-card-border: #e5e2d9;
+  --font-serif: 'Fraunces', serif;
+}
 
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-ivory);
+  color: var(--color-ink);
 }
