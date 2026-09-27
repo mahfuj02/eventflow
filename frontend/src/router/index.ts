@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import CreateEventView from '../views/CreateEventView.vue'
+import OrderSuccessView from '../views/OrderSuccessView.vue'
 
 function waitForAuthReady(): Promise<void> {
   const { loading } = useAuth()
@@ -36,6 +37,12 @@ const router = createRouter({
       path: '/events/new',
       name: 'create-event',
       component: CreateEventView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/orders/success',
+      name: 'order-success',
+      component: OrderSuccessView,
       meta: { requiresAuth: true },
     },
   ],

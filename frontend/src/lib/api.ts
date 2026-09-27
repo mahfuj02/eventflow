@@ -1,4 +1,6 @@
 import type { EventDocument } from '../../../shared/types/event'
+import type { OrderDocument } from '../../../shared/types/order'
+import type { TicketDocument } from '../../../shared/types/ticket'
 import { auth } from './firebase'
 
 export interface SyncedGuest {
@@ -54,4 +56,33 @@ export async function createEvent(input: CreateEventInput): Promise<EventDocumen
 export async function getMyEvents(): Promise<EventDocument[]> {
   const response = await authedFetch('/.netlify/functions/get-my-events')
   return response.json() as Promise<EventDocument[]>
+}
+
+export async function getEvents(): Promise<EventDocument[]> {
+  const response = await fetch('/.netlify/functions/get-events')
+  if (!response.ok) {
+    throw new Error(`get-events failed: ${response.status}`)
+  }
+  return response.json() as Promise<EventDocument[]>
+}
+
+export async function createCheckoutSession(eventId: string, ticketTypeId: string): Promise<{ url: string }> {
+  const response = await authedFetch('/.netlify/functions/create-checkout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId, ticketTypeId }),
+  })
+  return response.json() as Promise<{ url: string }>
+}
+
+export interface ConfirmedOrder {
+  order: OrderDocument
+  ticket: TicketDocument | null
+}
+
+export async function confirmOrder(sessionId: string): Promise<ConfirmedOrder> {
+  const response = await authedFetch(
+    `/.netlify/functions/confirm-order?session_id=${encodeURIComponent(sessionId)}`,
+  )
+  return response.json() as Promise<ConfirmedOrder>
 }
