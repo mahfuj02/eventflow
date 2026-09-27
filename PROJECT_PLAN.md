@@ -44,6 +44,20 @@ serverless functions — closing gaps in a job application.
   fancier
 - "Your Events" table + a "Recent Activity" feed
 
+## Host onboarding & approval
+
+- Guests are the default role on signup — no vetting.
+- `HostApply` form (public) creates a `hostApplications` doc:
+  `{ userId, orgName, contactName, email, phone, category, expectedAttendees, message, status: 'pending', createdAt }`
+- Approval is manual, not a built admin UI (out of scope for this project):
+  a single admin-only endpoint (`PATCH /api/admin/applications/:id/approve`,
+  gated by ADMIN_EMAIL check) flips `status` to 'approved' and sets
+  `user.role = 'host'` on the User doc.
+- `Event.organizerId` references the User who owns it (added field).
+- Vue Router guard: routes under `/dashboard` require `meta.requiresHost`
+  and `store.user.role === 'host'`; otherwise redirect to `/apply-to-host`.
+
+  
 ## Design reference
 Mockups for the four core views are in `design/` (public-home.png, guest-home.png,
 host-dashboard.png, host-apply.png). Match their layout, spacing, and content —
