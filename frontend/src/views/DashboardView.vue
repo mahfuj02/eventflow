@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { syncGuest, getMyEvents, type SyncedGuest } from '../lib/api'
+import { syncGuest, getMyEvents, getMyTickets, type SyncedGuest, type MyTicketSummary } from '../lib/api'
 import type { EventDocument } from '../../../shared/types/event'
 
 const { signOutUser } = useAuth()
@@ -11,6 +11,8 @@ const guest = ref<SyncedGuest | null>(null)
 const loadError = ref<string | null>(null)
 const events = ref<EventDocument[]>([])
 const eventsError = ref<string | null>(null)
+const tickets = ref<MyTicketSummary[]>([])
+const ticketsError = ref<string | null>(null)
 
 onMounted(async () => {
   try {
@@ -23,6 +25,12 @@ onMounted(async () => {
     events.value = await getMyEvents()
   } catch (err) {
     eventsError.value = err instanceof Error ? err.message : 'Failed to load events'
+  }
+
+  try {
+    tickets.value = await getMyTickets()
+  } catch (err) {
+    ticketsError.value = err instanceof Error ? err.message : 'Failed to load tickets'
   }
 })
 
@@ -43,6 +51,23 @@ function formatPrice(cents: number, currency: string): string {
     <p v-else-if="loadError" role="alert">{{ loadError }}</p>
     <p v-else>Loading...</p>
     <button type="button" @click="handleSignOut">Sign out</button>
+
+    <section>
+      <h2>Your tickets</h2>
+      <p v-if="ticketsError" role="alert">{{ ticketsError }}</p>
+      <p v-else-if="tickets.length === 0">You haven't bought any tickets yet.</p>
+      <ul v-else>
+        <li v-for="ticket in tickets" :key="ticket._id">
+          <strong>{{ ticket.eventTitle }}</strong> — {{ ticket.eventVenue }}
+          <br />
+          {{ new Date(ticket.startsAt).toLocaleString() }} –
+          {{ new Date(ticket.endsAt).toLocaleString() }}
+          <br />
+          {{ ticket.ticketTypeName }}: {{ formatPrice(ticket.price, ticket.currency) }}
+          — code <strong>{{ ticket.code }}</strong> ({{ ticket.status }})
+        </li>
+      </ul>
+    </section>
 
     <section>
       <h2>Your events</h2>

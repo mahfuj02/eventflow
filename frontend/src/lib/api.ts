@@ -86,3 +86,22 @@ export async function confirmOrder(sessionId: string): Promise<ConfirmedOrder> {
   )
   return response.json() as Promise<ConfirmedOrder>
 }
+
+export interface MyTicketSummary {
+  _id: string
+  code: string
+  status: TicketDocument['status']
+  purchasedAt: string
+  eventTitle: string
+  eventVenue: string
+  startsAt: string
+  endsAt: string
+  ticketTypeName: string
+  price: number
+  currency: string
+}
+
+export async function getMyTickets(): Promise<MyTicketSummary[]> {
+  const response = await authedFetch('/.netlify/functions/get-my-tickets')
+  return response.json() as Promise<MyTicketSummary[]>
+}
