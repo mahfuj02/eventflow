@@ -3,6 +3,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 export interface AuthenticatedUser {
   uid: string
   email: string
+  name?: string
 }
 
 export class UnauthorizedError extends Error {}
@@ -34,5 +35,9 @@ export async function verifyAuth(authHeader: string | null): Promise<Authenticat
     throw new UnauthorizedError('Token missing required claims')
   }
 
-  return { uid: payload.sub, email: payload.email }
+  return {
+    uid: payload.sub,
+    email: payload.email,
+    name: typeof payload.name === 'string' ? payload.name : undefined,
+  }
 }

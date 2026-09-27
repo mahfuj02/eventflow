@@ -13,18 +13,24 @@ export default async (req: Request): Promise<Response> => {
     const db = await getDb()
     const collection = db.collection<GuestDocument>('guests')
 
+    // name can't be in both $setOnInsert and $set (Mongo rejects that as a
+    // conflict on insert) - put it in whichever one actually applies.
+    const setOnInsert: Partial<GuestDocument> = {
+      firebaseUid: user.uid,
+      email: user.email,
+      role: 'guest',
+      createdAt: now,
+    }
+    const set: Partial<GuestDocument> = { updatedAt: now }
+    if (user.name) {
+      set.name = user.name
+    } else {
+      setOnInsert.name = user.email.split('@')[0]
+    }
+
     await collection.updateOne(
       { firebaseUid: user.uid },
-      {
-        $setOnInsert: {
-          firebaseUid: user.uid,
-          email: user.email,
-          name: user.email.split('@')[0],
-          role: 'guest',
-          createdAt: now,
-        },
-        $set: { updatedAt: now },
-      },
+      { $setOnInsert: setOnInsert, $set: set },
       { upsert: true },
     )
 
