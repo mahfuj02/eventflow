@@ -13,5 +13,5 @@ export function getMongoClient(): Promise<MongoClient> {
 
 export async function getDb() {
   const client = await getMongoClient()
-  return client.db()
+  return client.db('eventflow')
 }
