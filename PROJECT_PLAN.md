@@ -17,7 +17,32 @@ serverless functions — closing gaps in a job application.
 3. Slice 1 — Create Event: API function → Vue form → saved in MongoDB
 4. Slice 2 — Browse Events + Buy Ticket: Stripe test-mode checkout
 5. Slice 3 — Guest/CRM View: purchase history pulled per guest
-6. Slice 4 — Host Dashboard: read-only view of sales + guest list per event
+6. Slice 4 — Host Dashboard: read-only view of sales + guest list per event,
+   plus one chart (tickets sold + revenue over time)
+
+## UI scope (locked — do not add beyond this list without a new decision)
+
+**Public Home (logged out)**
+- Hero with search, event grid
+- Event cards use a neutral icon placeholder for now (swap for real photos
+  via `Event.imageUrl` once real images exist — no upload flow yet)
+- Nav: Browse Events only, plus Sign in / Sign up
+
+**Guest Home (logged in)**
+- Nav: Home + My Tickets only — no Favorites, Profile, or Settings pages
+- Sections: "Your tickets" (purchase history) + "More events for you" (browse)
+- If the guest checked out without an account, show a small banner offering
+  to create one — never a blocking wall (note: guest checkout without an
+  account isn't built yet — buying currently requires login; this banner
+  scope depends on that being added first)
+
+**Host Dashboard (logged in)**
+- Nav: Dashboard + Events + Orders + Guests only — no Marketing, Analytics,
+  or "Quick Actions" panel, no upsell banners
+- Summary cards: Total Tickets Sold, Total Revenue, Active Events
+- One simple chart: tickets sold + revenue over time (line or bar), nothing
+  fancier
+- "Your Events" table + a "Recent Activity" feed
 
 ## Development approach
 - One vertical slice fully working before starting the next
