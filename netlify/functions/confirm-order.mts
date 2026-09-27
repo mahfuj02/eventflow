@@ -53,16 +53,28 @@ export default async (req: Request): Promise<Response> => {
       // runs before the guest doc otherwise would have been created.
       const guests = db.collection<Omit<GuestDocument, '_id'>>('guests')
       const nowIso = new Date().toISOString()
+
+      // sync-guest.mts writes the literal 'Guest' placeholder for anonymous
+      // checkout users before their email is known. Once we learn it here,
+      // upgrade that placeholder too - otherwise the nav shows "Guest"
+      // forever even after a real purchase. A real account's existing name
+      // (a proper name or Google display name) is left untouched.
+      const existingGuest = await guests.findOne({ firebaseUid: user.uid })
+      const shouldSetName = !existingGuest || existingGuest.name === 'Guest'
+
       await guests.updateOne(
         { firebaseUid: user.uid },
         {
           $setOnInsert: {
             firebaseUid: user.uid,
-            name: buyerEmail.split('@')[0],
             role: 'guest',
             createdAt: nowIso,
           },
-          $set: { email: buyerEmail, updatedAt: nowIso },
+          $set: {
+            email: buyerEmail,
+            updatedAt: nowIso,
+            ...(shouldSetName ? { name: buyerEmail.split('@')[0] } : {}),
+          },
         },
         { upsert: true },
       )
