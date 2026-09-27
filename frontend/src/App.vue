@@ -5,11 +5,12 @@ import { useAuth } from './composables/useAuth'
 import { syncGuest, type SyncedGuest } from './lib/api'
 import logo from './assets/logo.svg'
 
-const { currentUser, signOutUser } = useAuth()
+const { currentUser, signOutUser, sendVerificationEmail } = useAuth()
 const router = useRouter()
 const guest = ref<SyncedGuest | null>(null)
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+const verificationSent = ref(false)
 
 watch(
   currentUser,
@@ -62,6 +63,11 @@ async function handleSignOut() {
   dropdownOpen.value = false
   await signOutUser()
   router.push('/login')
+}
+
+async function handleResendVerification() {
+  await sendVerificationEmail()
+  verificationSent.value = true
 }
 </script>
 
@@ -120,5 +126,21 @@ async function handleSignOut() {
       </div>
     </nav>
   </header>
+
+  <div
+    v-if="currentUser && !currentUser.emailVerified"
+    class="border-b border-card-border bg-[#FDF3E0] px-4 py-2 text-center text-sm text-ink sm:px-6"
+  >
+    <span>Please verify your email address.</span>
+    <button
+      type="button"
+      :disabled="verificationSent"
+      class="ml-2 font-medium text-teal hover:underline disabled:cursor-not-allowed disabled:text-ink-soft"
+      @click="handleResendVerification"
+    >
+      {{ verificationSent ? 'Email sent' : 'Resend email' }}
+    </button>
+  </div>
+
   <RouterView />
 </template>

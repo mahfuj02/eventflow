@@ -46,6 +46,10 @@ async function handleGoogleSignIn() {
           />
         </label>
 
+        <RouterLink to="/forgot-password" class="-mt-2 self-end text-xs text-teal hover:underline">
+          Forgot password?
+        </RouterLink>
+
         <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
 
         <button

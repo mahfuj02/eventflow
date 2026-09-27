@@ -5,11 +5,20 @@ import { useAuth } from '../composables/useAuth'
 
 const email = ref('')
 const password = ref('')
-const { signUp, signInWithGoogle, error } = useAuth()
+const confirmPassword = ref('')
+const mismatchError = ref<string | null>(null)
+const { signUp, signInWithGoogle, sendVerificationEmail, error } = useAuth()
 const router = useRouter()
 
 async function handleSubmit() {
+  mismatchError.value = null
+  if (password.value !== confirmPassword.value) {
+    mismatchError.value = 'Passwords do not match'
+    return
+  }
+
   await signUp(email.value, password.value)
+  await sendVerificationEmail()
   router.push('/dashboard')
 }
 
@@ -31,6 +40,17 @@ async function handleGoogleSignIn() {
         Password
         <input v-model="password" type="password" required autocomplete="new-password" minlength="6" />
       </label>
+      <label>
+        Confirm password
+        <input
+          v-model="confirmPassword"
+          type="password"
+          required
+          autocomplete="new-password"
+          minlength="6"
+        />
+      </label>
+      <p v-if="mismatchError" role="alert">{{ mismatchError }}</p>
       <p v-if="error" role="alert">{{ error }}</p>
       <button type="submit">Sign up</button>
     </form>

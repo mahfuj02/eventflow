@@ -4,6 +4,8 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -54,6 +56,21 @@ export function useAuth() {
     await signOut(auth)
   }
 
+  async function sendVerificationEmail() {
+    if (!auth.currentUser) return
+    await sendEmailVerification(auth.currentUser)
+  }
+
+  async function resetPassword(email: string) {
+    error.value = null
+    try {
+      await sendPasswordResetEmail(auth, email)
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to send reset email'
+      throw err
+    }
+  }
+
   return {
     currentUser,
     loading,
@@ -62,5 +79,7 @@ export function useAuth() {
     signIn,
     signInWithGoogle,
     signOutUser,
+    sendVerificationEmail,
+    resetPassword,
   }
 }
