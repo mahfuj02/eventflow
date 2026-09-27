@@ -4,9 +4,18 @@ import { getDb } from './_lib/mongo'
 import { getStripe } from './_lib/stripe'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
+interface CheckoutItemBody {
+  ticketTypeId?: unknown
+  quantity?: unknown
+}
+
 interface CheckoutSessionBody {
   eventId?: unknown
-  ticketTypeId?: unknown
+  items?: CheckoutItemBody[]
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0
 }
 
 export default async (req: Request): Promise<Response> => {
@@ -18,8 +27,8 @@ export default async (req: Request): Promise<Response> => {
     const user = await verifyAuth(req.headers.get('authorization'))
     const body = (await req.json()) as CheckoutSessionBody
 
-    if (typeof body.eventId !== 'string' || typeof body.ticketTypeId !== 'string') {
-      return new Response('eventId and ticketTypeId are required', { status: 400 })
+    if (typeof body.eventId !== 'string' || !Array.isArray(body.items) || body.items.length === 0) {
+      return new Response('eventId and at least one item are required', { status: 400 })
     }
 
     const db = await getDb()
@@ -30,37 +39,55 @@ export default async (req: Request): Promise<Response> => {
       return new Response('Event not found', { status: 404 })
     }
 
-    const ticketType = event.ticketTypes.find((t) => t.id === body.ticketTypeId)
-    if (!ticketType) {
-      return new Response('Ticket type not found', { status: 404 })
-    }
+    const items: { ticketTypeId: string; quantity: number }[] = []
+    const lineItems: Array<{
+      price_data: {
+        currency: string
+        unit_amount: number
+        product_data: { name: string }
+      }
+      quantity: number
+    }> = []
 
-    if (ticketType.quantitySold >= ticketType.quantityTotal) {
-      return new Response('Sold out', { status: 400 })
+    for (const item of body.items) {
+      if (typeof item.ticketTypeId !== 'string' || !isPositiveInteger(item.quantity)) {
+        return new Response('Each item needs a ticketTypeId and a positive quantity', { status: 400 })
+      }
+
+      const ticketType = event.ticketTypes.find((t) => t.id === item.ticketTypeId)
+      if (!ticketType) {
+        return new Response('Ticket type not found', { status: 404 })
+      }
+
+      const remaining = ticketType.quantityTotal - ticketType.quantitySold
+      if (item.quantity > remaining) {
+        return new Response(`Only ${remaining} left for ${ticketType.name}`, { status: 400 })
+      }
+
+      items.push({ ticketTypeId: item.ticketTypeId, quantity: item.quantity })
+      lineItems.push({
+        price_data: {
+          currency: ticketType.currency,
+          unit_amount: ticketType.price,
+          product_data: {
+            name: `${event.title} — ${ticketType.name}`,
+          },
+        },
+        quantity: item.quantity,
+      })
     }
 
     const origin = new URL(req.url).origin
     const stripe = getStripe()
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency: ticketType.currency,
-            unit_amount: ticketType.price,
-            product_data: {
-              name: `${event.title} — ${ticketType.name}`,
-            },
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       success_url: `${origin}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: origin,
       metadata: {
         eventId: body.eventId,
-        ticketTypeId: body.ticketTypeId,
         guestId: user.uid,
+        items: JSON.stringify(items),
       },
     })
 

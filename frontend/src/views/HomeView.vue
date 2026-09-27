@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useAuth } from '../composables/useAuth'
-import { getEvents, createCheckoutSession } from '../lib/api'
+import { getEvents } from '../lib/api'
 import type { EventDocument } from '../../../shared/types/event'
 
-const { currentUser, signInAsGuest } = useAuth()
 const events = ref<EventDocument[]>([])
 const error = ref<string | null>(null)
-const buyingTicketTypeId = ref<string | null>(null)
 const search = ref('')
 
 const filteredEvents = computed(() => {
@@ -49,19 +46,9 @@ function categoryBadgeClass(category: string): string {
   return categoryBadgeStyles[category.toLowerCase()] ?? 'bg-gray-100 text-gray-700'
 }
 
-async function handleBuy(eventId: string, ticketTypeId: string) {
-  error.value = null
-  buyingTicketTypeId.value = ticketTypeId
-  try {
-    if (!currentUser.value) {
-      await signInAsGuest()
-    }
-    const { url } = await createCheckoutSession(eventId, ticketTypeId)
-    window.location.href = url
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to start checkout'
-    buyingTicketTypeId.value = null
-  }
+function fromPrice(event: EventDocument): string {
+  const min = Math.min(...event.ticketTypes.map((t) => t.price))
+  return `From ${formatPrice(min, event.ticketTypes[0].currency)}`
 }
 </script>
 
@@ -139,22 +126,14 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
               {{ event.venue }} · {{ formatDate(event.startsAt) }}
             </p>
 
-            <div
-              v-for="ticket in event.ticketTypes"
-              :key="ticket.id"
-              class="mt-4 flex items-center justify-between border-t border-card-border pt-4"
-            >
-              <span class="text-sm font-medium text-ink">
-                {{ formatPrice(ticket.price, ticket.currency) }}
-              </span>
-              <button
-                type="button"
-                :disabled="ticket.quantitySold >= ticket.quantityTotal || buyingTicketTypeId === ticket.id"
-                class="rounded-md bg-teal px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-dark disabled:cursor-not-allowed disabled:bg-gray-300"
-                @click="handleBuy(event._id, ticket.id)"
+            <div class="mt-4 flex items-center justify-between border-t border-card-border pt-4">
+              <span class="text-sm font-medium text-ink">{{ fromPrice(event) }}</span>
+              <RouterLink
+                :to="`/events/${event._id}`"
+                class="text-sm font-medium text-teal hover:underline"
               >
-                {{ ticket.quantitySold >= ticket.quantityTotal ? 'Sold out' : 'Buy ticket' }}
-              </button>
+                View event →
+              </RouterLink>
             </div>
           </div>
         </article>

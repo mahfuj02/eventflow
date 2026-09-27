@@ -3,6 +3,12 @@ import type { GuestDocument } from '../../shared/types/guest'
 import { getDb } from './_lib/mongo'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
+interface TicketTypeBody {
+  name?: unknown
+  price?: unknown
+  quantityTotal?: unknown
+}
+
 interface CreateEventBody {
   title?: unknown
   description?: unknown
@@ -10,11 +16,7 @@ interface CreateEventBody {
   category?: unknown
   startsAt?: unknown
   endsAt?: unknown
-  ticketType?: {
-    name?: unknown
-    price?: unknown
-    quantityTotal?: unknown
-  }
+  ticketTypes?: TicketTypeBody[]
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -36,10 +38,18 @@ function validate(body: CreateEventBody): string | null {
   if (!endsAt || Number.isNaN(endsAt.getTime())) return 'endsAt must be a valid date'
   if (endsAt <= startsAt) return 'endsAt must be after startsAt'
 
-  const ticketType = body.ticketType
-  if (!ticketType || !isNonEmptyString(ticketType.name)) return 'ticketType.name is required'
-  if (!isPositiveInteger(ticketType.price)) return 'ticketType.price must be a positive integer (cents)'
-  if (!isPositiveInteger(ticketType.quantityTotal)) return 'ticketType.quantityTotal must be a positive integer'
+  if (!Array.isArray(body.ticketTypes) || body.ticketTypes.length === 0) {
+    return 'At least one ticket type is required'
+  }
+  for (const ticketType of body.ticketTypes) {
+    if (!isNonEmptyString(ticketType.name)) return 'ticketTypes[].name is required'
+    if (!isPositiveInteger(ticketType.price)) {
+      return 'ticketTypes[].price must be a positive integer (cents)'
+    }
+    if (!isPositiveInteger(ticketType.quantityTotal)) {
+      return 'ticketTypes[].quantityTotal must be a positive integer'
+    }
+  }
 
   return null
 }
@@ -65,14 +75,14 @@ export default async (req: Request): Promise<Response> => {
       return new Response(error, { status: 400 })
     }
 
-    const ticketType: TicketType = {
+    const ticketTypes: TicketType[] = body.ticketTypes!.map((ticketType) => ({
       id: crypto.randomUUID(),
-      name: (body.ticketType!.name as string).trim(),
-      price: body.ticketType!.price as number,
+      name: (ticketType.name as string).trim(),
+      price: ticketType.price as number,
       currency: 'usd',
-      quantityTotal: body.ticketType!.quantityTotal as number,
+      quantityTotal: ticketType.quantityTotal as number,
       quantitySold: 0,
-    }
+    }))
 
     const now = new Date().toISOString()
     const event: Omit<EventDocument, '_id'> = {
@@ -83,7 +93,7 @@ export default async (req: Request): Promise<Response> => {
       startsAt: new Date(body.startsAt as string).toISOString(),
       endsAt: new Date(body.endsAt as string).toISOString(),
       status: 'published',
-      ticketTypes: [ticketType],
+      ticketTypes,
       createdAt: now,
       updatedAt: now,
       ...(isNonEmptyString(body.category) ? { category: body.category.trim() } : {}),

@@ -11,6 +11,7 @@ import OrderSuccessView from '../views/OrderSuccessView.vue'
 import EventGuestsView from '../views/EventGuestsView.vue'
 import HostApplyView from '../views/HostApplyView.vue'
 import GuestHomeView from '../views/GuestHomeView.vue'
+import EventDetailView from '../views/EventDetailView.vue'
 
 function waitForAuthReady(): Promise<void> {
   const { loading } = useAuth()
@@ -62,6 +63,11 @@ const router = createRouter({
       name: 'event-guests',
       component: EventGuestsView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/events/:eventId',
+      name: 'event-detail',
+      component: EventDetailView,
     },
     {
       path: '/apply-to-host',

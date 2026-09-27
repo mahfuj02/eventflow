@@ -32,6 +32,12 @@ export async function syncGuest(): Promise<SyncedGuest> {
   return response.json() as Promise<SyncedGuest>
 }
 
+export interface TicketTypeInput {
+  name: string
+  price: number
+  quantityTotal: number
+}
+
 export interface CreateEventInput {
   title: string
   description: string
@@ -39,11 +45,7 @@ export interface CreateEventInput {
   category?: string
   startsAt: string
   endsAt: string
-  ticketType: {
-    name: string
-    price: number
-    quantityTotal: number
-  }
+  ticketTypes: TicketTypeInput[]
 }
 
 export async function createEvent(input: CreateEventInput): Promise<EventDocument> {
@@ -68,18 +70,42 @@ export async function getEvents(): Promise<EventDocument[]> {
   return response.json() as Promise<EventDocument[]>
 }
 
-export async function createCheckoutSession(eventId: string, ticketTypeId: string): Promise<{ url: string }> {
+export interface CheckoutItem {
+  ticketTypeId: string
+  quantity: number
+}
+
+export interface EventWithOrganizer {
+  event: EventDocument
+  organizer: {
+    name: string
+    hostingSinceYear: number
+  }
+}
+
+export async function getEvent(eventId: string): Promise<EventWithOrganizer> {
+  const response = await fetch(`/.netlify/functions/get-event?eventId=${encodeURIComponent(eventId)}`)
+  if (!response.ok) {
+    throw new Error(`get-event failed: ${response.status}`)
+  }
+  return response.json() as Promise<EventWithOrganizer>
+}
+
+export async function createCheckoutSession(
+  eventId: string,
+  items: CheckoutItem[],
+): Promise<{ url: string }> {
   const response = await authedFetch('/.netlify/functions/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ eventId, ticketTypeId }),
+    body: JSON.stringify({ eventId, items }),
   })
   return response.json() as Promise<{ url: string }>
 }
 
 export interface ConfirmedOrder {
-  order: OrderDocument
-  ticket: TicketDocument | null
+  orders: OrderDocument[]
+  tickets: TicketDocument[]
 }
 
 export async function confirmOrder(sessionId: string): Promise<ConfirmedOrder> {

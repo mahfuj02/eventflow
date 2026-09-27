@@ -35,23 +35,31 @@ onMounted(async () => {
         <p role="alert" class="mt-2 text-sm text-red-600">{{ error }}</p>
       </template>
 
-      <template v-else-if="result && result.ticket">
+      <template v-else-if="result && result.tickets.length > 0">
         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal/10">
           <svg class="h-6 w-6 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
         </div>
         <h1 class="mt-4 font-serif text-lg font-semibold text-ink">You're all set!</h1>
-        <p class="mt-2 text-sm text-ink-soft">Your ticket has been confirmed.</p>
-        <div class="mt-6 rounded-lg bg-ivory px-4 py-3">
-          <p class="text-xs uppercase tracking-wide text-ink-soft">Ticket code</p>
-          <p class="mt-1 font-mono text-lg font-semibold text-ink">{{ result.ticket.code }}</p>
+        <p class="mt-2 text-sm text-ink-soft">
+          {{ result.tickets.length === 1 ? 'Your ticket has been confirmed.' : `Your ${result.tickets.length} tickets have been confirmed.` }}
+        </p>
+        <div class="mt-6 space-y-2">
+          <div
+            v-for="ticket in result.tickets"
+            :key="ticket._id"
+            class="rounded-lg bg-ivory px-4 py-3 text-left"
+          >
+            <p class="text-xs uppercase tracking-wide text-ink-soft">Ticket code</p>
+            <p class="mt-1 font-mono text-lg font-semibold text-ink">{{ ticket.code }}</p>
+          </div>
         </div>
       </template>
 
       <template v-else-if="result">
         <h1 class="mt-4 font-serif text-lg font-semibold text-ink">Payment successful</h1>
-        <p class="mt-2 text-sm text-ink-soft">No ticket was found for this order.</p>
+        <p class="mt-2 text-sm text-ink-soft">No tickets were found for this order.</p>
       </template>
 
       <template v-else>

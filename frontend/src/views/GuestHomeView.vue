@@ -201,12 +201,18 @@ async function handleCreateAccount() {
             <div class="h-32 bg-[#efece4]"></div>
             <div class="p-4">
               <p class="font-semibold text-ink">{{ event.title }}</p>
-              <p class="mt-1 text-sm text-ink-soft">
-                {{ formatDate(event.startsAt) }}
-                <template v-if="event.ticketTypes[0]">
-                  · {{ formatPrice(event.ticketTypes[0].price, event.ticketTypes[0].currency) }}
-                </template>
-              </p>
+              <p class="mt-1 text-sm text-ink-soft">{{ formatDate(event.startsAt) }}</p>
+              <div class="mt-3 flex items-center justify-between border-t border-card-border pt-3">
+                <span class="text-sm font-medium text-ink">
+                  {{ event.ticketTypes[0] ? formatPrice(event.ticketTypes[0].price, event.ticketTypes[0].currency) : '' }}
+                </span>
+                <RouterLink
+                  :to="`/events/${event._id}`"
+                  class="text-sm font-medium text-teal hover:underline"
+                >
+                  View event →
+                </RouterLink>
+              </div>
             </div>
           </article>
         </div>

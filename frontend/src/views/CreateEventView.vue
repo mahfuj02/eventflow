@@ -3,19 +3,31 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createEvent } from '../lib/api'
 
+interface TicketRow {
+  name: string
+  price: string
+  quantity: string
+}
+
 const title = ref('')
 const description = ref('')
 const venue = ref('')
 const category = ref('')
 const startsAt = ref('')
 const endsAt = ref('')
-const ticketName = ref('')
-const ticketPrice = ref('')
-const ticketQuantity = ref('')
+const ticketRows = ref<TicketRow[]>([{ name: '', price: '', quantity: '' }])
 
 const error = ref<string | null>(null)
 const submitting = ref(false)
 const router = useRouter()
+
+function addTicketRow() {
+  ticketRows.value.push({ name: '', price: '', quantity: '' })
+}
+
+function removeTicketRow(index: number) {
+  ticketRows.value.splice(index, 1)
+}
 
 async function handleSubmit() {
   error.value = null
@@ -28,11 +40,11 @@ async function handleSubmit() {
       category: category.value || undefined,
       startsAt: new Date(startsAt.value).toISOString(),
       endsAt: new Date(endsAt.value).toISOString(),
-      ticketType: {
-        name: ticketName.value,
-        price: Math.round(Number(ticketPrice.value) * 100),
-        quantityTotal: Number(ticketQuantity.value),
-      },
+      ticketTypes: ticketRows.value.map((row) => ({
+        name: row.name,
+        price: Math.round(Number(row.price) * 100),
+        quantityTotal: Number(row.quantity),
+      })),
     })
     router.push('/dashboard')
   } catch (err) {
@@ -72,21 +84,29 @@ async function handleSubmit() {
         <input v-model="endsAt" type="datetime-local" required />
       </label>
 
-      <fieldset>
-        <legend>Ticket</legend>
+      <fieldset v-for="(row, index) in ticketRows" :key="index">
+        <legend>Ticket type {{ index + 1 }}</legend>
         <label>
           Name
-          <input v-model="ticketName" type="text" placeholder="General Admission" required />
+          <input v-model="row.name" type="text" placeholder="General Admission" required />
         </label>
         <label>
           Price (USD)
-          <input v-model="ticketPrice" type="number" min="0.01" step="0.01" required />
+          <input v-model="row.price" type="number" min="0.01" step="0.01" required />
         </label>
         <label>
           Quantity available
-          <input v-model="ticketQuantity" type="number" min="1" step="1" required />
+          <input v-model="row.quantity" type="number" min="1" step="1" required />
         </label>
+        <button
+          v-if="ticketRows.length > 1"
+          type="button"
+          @click="removeTicketRow(index)"
+        >
+          Remove
+        </button>
       </fieldset>
+      <button type="button" @click="addTicketRow">Add another ticket type</button>
 
       <p v-if="error" role="alert">{{ error }}</p>
       <button type="submit" :disabled="submitting">

@@ -11,6 +11,11 @@ function withStringId<T extends { _id: ObjectId }>({ _id, ...rest }: T) {
   return { _id: _id.toString(), ...rest }
 }
 
+interface SessionItem {
+  ticketTypeId: string
+  quantity: number
+}
+
 export default async (req: Request): Promise<Response> => {
   if (req.method !== 'GET') {
     return new Response('Method Not Allowed', { status: 405 })
@@ -28,12 +33,13 @@ export default async (req: Request): Promise<Response> => {
     const tickets = db.collection<Omit<TicketDocument, '_id'>>('tickets')
     const events = db.collection<Omit<EventDocument, '_id'>>('events')
 
-    const existingOrder = await orders.findOne({ stripeCheckoutSessionId: sessionId })
-    if (existingOrder) {
-      const existingTicket = await tickets.findOne({ orderId: existingOrder._id.toString() })
+    const existingOrders = await orders.find({ stripeCheckoutSessionId: sessionId }).toArray()
+    if (existingOrders.length > 0) {
+      const orderIds = existingOrders.map((o) => o._id.toString())
+      const existingTickets = await tickets.find({ orderId: { $in: orderIds } }).toArray()
       return Response.json({
-        order: withStringId(existingOrder),
-        ticket: existingTicket ? withStringId(existingTicket) : null,
+        orders: existingOrders.map(withStringId),
+        tickets: existingTickets.map(withStringId),
       })
     }
 
@@ -81,51 +87,59 @@ export default async (req: Request): Promise<Response> => {
     }
 
     const eventId = session.metadata.eventId
-    const ticketTypeId = session.metadata.ticketTypeId
+    const items = JSON.parse(session.metadata.items ?? '[]') as SessionItem[]
     const event = await events.findOne({ _id: new ObjectId(eventId) })
-    const ticketType = event?.ticketTypes.find((t) => t.id === ticketTypeId)
-    if (!event || !ticketType) {
-      return new Response('Event or ticket type no longer exists', { status: 404 })
+    if (!event || items.length === 0) {
+      return new Response('Event no longer exists', { status: 404 })
     }
 
     const now = new Date().toISOString()
-    const order: Omit<OrderDocument, '_id'> = {
-      guestId: user.uid,
-      eventId,
-      ticketTypeId,
-      quantity: 1,
-      amountTotal: session.amount_total ?? ticketType.price,
-      currency: ticketType.currency,
-      status: 'paid',
-      stripeCheckoutSessionId: session.id,
-      stripePaymentIntentId:
-        typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
-      createdAt: now,
-      updatedAt: now,
+    const createdOrders: OrderDocument[] = []
+    const createdTickets: TicketDocument[] = []
+
+    for (const item of items) {
+      const ticketType = event.ticketTypes.find((t) => t.id === item.ticketTypeId)
+      if (!ticketType) continue
+
+      const order: Omit<OrderDocument, '_id'> = {
+        guestId: user.uid,
+        eventId,
+        ticketTypeId: item.ticketTypeId,
+        quantity: item.quantity,
+        amountTotal: ticketType.price * item.quantity,
+        currency: ticketType.currency,
+        status: 'paid',
+        stripeCheckoutSessionId: session.id,
+        stripePaymentIntentId:
+          typeof session.payment_intent === 'string' ? session.payment_intent : undefined,
+        createdAt: now,
+        updatedAt: now,
+      }
+      const orderResult = await orders.insertOne(order)
+      createdOrders.push({ ...order, _id: orderResult.insertedId.toString() })
+
+      await events.updateOne(
+        { _id: new ObjectId(eventId), 'ticketTypes.id': item.ticketTypeId },
+        { $inc: { 'ticketTypes.$.quantitySold': item.quantity } },
+      )
+
+      for (let i = 0; i < item.quantity; i++) {
+        const ticket: Omit<TicketDocument, '_id'> = {
+          orderId: orderResult.insertedId.toString(),
+          eventId,
+          ticketTypeId: item.ticketTypeId,
+          guestId: user.uid,
+          code: crypto.randomUUID(),
+          status: 'valid',
+          createdAt: now,
+          updatedAt: now,
+        }
+        const ticketResult = await tickets.insertOne(ticket)
+        createdTickets.push({ ...ticket, _id: ticketResult.insertedId.toString() })
+      }
     }
-    const orderResult = await orders.insertOne(order)
 
-    await events.updateOne(
-      { _id: new ObjectId(eventId), 'ticketTypes.id': ticketTypeId },
-      { $inc: { 'ticketTypes.$.quantitySold': 1 } },
-    )
-
-    const ticket: Omit<TicketDocument, '_id'> = {
-      orderId: orderResult.insertedId.toString(),
-      eventId,
-      ticketTypeId,
-      guestId: user.uid,
-      code: crypto.randomUUID(),
-      status: 'valid',
-      createdAt: now,
-      updatedAt: now,
-    }
-    const ticketResult = await tickets.insertOne(ticket)
-
-    return Response.json({
-      order: { ...order, _id: orderResult.insertedId.toString() },
-      ticket: { ...ticket, _id: ticketResult.insertedId.toString() },
-    })
+    return Response.json({ orders: createdOrders, tickets: createdTickets })
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return new Response(err.message, { status: 401 })
