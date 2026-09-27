@@ -44,6 +44,18 @@ serverless functions — closing gaps in a job application.
   fancier
 - "Your Events" table + a "Recent Activity" feed
 
+## Design reference
+Mockups for the four core views are in `design/` (public-home.png, guest-home.png,
+host-dashboard.png, host-apply.png). Match their layout, spacing, and content —
+do not copy any markup, this is a visual reference only.
+
+Design tokens:
+- Background: #F7F5F0 (ivory)
+- Text primary: #1C1B19 · Text secondary: #6B6A65
+- Accent (teal): #0F6E56 / #085041 (hover)
+- Headings: Fraunces (serif) · Body: system sans-serif
+- Cards: white bg, 1px border #E5E2D9, 12–16px radius
+- Buttons: filled teal (.btn-fill) for primary actions, ghost/outline for secondary
 ## Development approach
 - One vertical slice fully working before starting the next
 - Use Plan Mode for each slice before Claude edits any files
