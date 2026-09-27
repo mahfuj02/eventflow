@@ -20,5 +20,6 @@ export interface EventDocument extends MongoDocument {
   endsAt: string;
   status: EventStatus;
   imageUrl?: string;
+  category?: string;
   ticketTypes: TicketType[];
 }

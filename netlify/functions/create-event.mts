@@ -6,6 +6,7 @@ interface CreateEventBody {
   title?: unknown
   description?: unknown
   venue?: unknown
+  category?: unknown
   startsAt?: unknown
   endsAt?: unknown
   ticketType?: {
@@ -77,6 +78,7 @@ export default async (req: Request): Promise<Response> => {
       ticketTypes: [ticketType],
       createdAt: now,
       updatedAt: now,
+      ...(isNonEmptyString(body.category) ? { category: body.category.trim() } : {}),
     }
 
     const db = await getDb()

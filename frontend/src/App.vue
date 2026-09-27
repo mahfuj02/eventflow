@@ -16,6 +16,7 @@ const { currentUser } = useAuth()
         </template>
         <template v-else>
           <RouterLink to="/" class="text-ink-soft hover:text-ink">Browse events</RouterLink>
+          <RouterLink to="/signup" class="text-ink-soft hover:text-ink">For hosts</RouterLink>
           <RouterLink
             to="/login"
             class="rounded-md border border-card-border px-3 py-1.5 text-ink hover:bg-white"

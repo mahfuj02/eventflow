@@ -6,6 +6,7 @@ import { createEvent } from '../lib/api'
 const title = ref('')
 const description = ref('')
 const venue = ref('')
+const category = ref('')
 const startsAt = ref('')
 const endsAt = ref('')
 const ticketName = ref('')
@@ -24,6 +25,7 @@ async function handleSubmit() {
       title: title.value,
       description: description.value,
       venue: venue.value,
+      category: category.value || undefined,
       startsAt: new Date(startsAt.value).toISOString(),
       endsAt: new Date(endsAt.value).toISOString(),
       ticketType: {
@@ -56,6 +58,10 @@ async function handleSubmit() {
       <label>
         Venue
         <input v-model="venue" type="text" required />
+      </label>
+      <label>
+        Category (optional)
+        <input v-model="category" type="text" placeholder="Music, Comedy, Contest..." />
       </label>
       <label>
         Starts at

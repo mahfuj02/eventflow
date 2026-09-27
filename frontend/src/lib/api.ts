@@ -35,6 +35,7 @@ export interface CreateEventInput {
   title: string
   description: string
   venue: string
+  category?: string
   startsAt: string
   endsAt: string
   ticketType: {

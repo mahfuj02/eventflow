@@ -41,6 +41,16 @@ function formatDate(iso: string): string {
   })
 }
 
+const categoryBadgeStyles: Record<string, string> = {
+  music: 'bg-teal/10 text-teal-dark',
+  comedy: 'bg-amber-100 text-amber-800',
+  contest: 'bg-rose-100 text-rose-800',
+}
+
+function categoryBadgeClass(category: string): string {
+  return categoryBadgeStyles[category.toLowerCase()] ?? 'bg-gray-100 text-gray-700'
+}
+
 async function handleBuy(eventId: string, ticketTypeId: string) {
   if (!currentUser.value) {
     router.push('/login')
@@ -62,28 +72,40 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
 <template>
   <main class="min-h-[calc(100svh-65px)] bg-ivory">
     <section class="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
-      <div class="rounded-2xl bg-ink px-6 py-16 text-center sm:px-12">
-        <h1 class="font-serif text-3xl font-semibold text-white sm:text-5xl">
-          Discover events worth showing up for
-        </h1>
-        <p class="mx-auto mt-4 max-w-xl text-gray-300">
-          Concerts, meetups, and workshops — browse what's happening and grab your ticket in a
-          few clicks.
-        </p>
-        <form class="mx-auto mt-8 flex max-w-lg gap-2" @submit.prevent>
-          <input
-            v-model="search"
-            type="search"
-            placeholder="Search events or venues"
-            class="w-full rounded-lg border-0 px-4 py-3 text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-teal"
-          />
-          <button
-            type="submit"
-            class="shrink-0 rounded-lg bg-teal px-5 py-3 text-sm font-semibold text-white hover:bg-teal-dark"
-          >
-            Search
-          </button>
-        </form>
+      <div
+        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0a2620] via-teal-dark to-teal px-6 py-16 text-center sm:px-12"
+      >
+        <div class="pointer-events-none absolute inset-0">
+          <div class="absolute -right-10 top-6 h-56 w-56 rounded-full border border-white/10"></div>
+          <div class="absolute right-24 top-32 h-28 w-28 rounded-full border border-white/10"></div>
+          <div class="absolute right-16 top-10 h-2 w-2 rounded-full bg-white/30"></div>
+          <div class="absolute right-40 top-20 h-1.5 w-1.5 rounded-full bg-white/20"></div>
+          <div class="absolute right-56 top-40 h-1.5 w-1.5 rounded-full bg-white/20"></div>
+        </div>
+
+        <div class="relative">
+          <h1 class="font-serif text-3xl font-semibold text-white sm:text-5xl">
+            Discover events worth showing up for
+          </h1>
+          <p class="mx-auto mt-4 max-w-xl text-gray-300">
+            Concerts, comedy nights, festivals, and workshops — book in a minute, no account
+            required.
+          </p>
+          <form class="mx-auto mt-8 flex max-w-lg gap-2" @submit.prevent>
+            <input
+              v-model="search"
+              type="search"
+              placeholder="Search events, venues, or cities"
+              class="w-full rounded-lg border-0 px-4 py-3 text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-teal"
+            />
+            <button
+              type="submit"
+              class="shrink-0 rounded-lg bg-teal px-5 py-3 text-sm font-semibold text-white hover:bg-teal-dark"
+            >
+              Search
+            </button>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -108,6 +130,14 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
           </div>
 
           <div class="flex flex-1 flex-col p-5">
+            <span
+              v-if="event.category"
+              class="mb-2 inline-block w-fit rounded-full px-2.5 py-0.5 text-xs font-medium"
+              :class="categoryBadgeClass(event.category)"
+            >
+              {{ event.category }}
+            </span>
+
             <h3 class="font-semibold text-ink">{{ event.title }}</h3>
             <p class="mt-1 text-sm text-ink-soft">
               {{ event.venue }} · {{ formatDate(event.startsAt) }}
@@ -132,6 +162,26 @@ async function handleBuy(eventId: string, ticketTypeId: string) {
             </div>
           </div>
         </article>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+      <div
+        class="flex flex-col items-start gap-4 rounded-2xl bg-[#e3f5ee] px-6 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-10"
+      >
+        <div>
+          <h2 class="font-serif text-xl font-semibold text-ink">Bring your event to EventFlow</h2>
+          <p class="mt-2 max-w-xl text-sm text-teal-dark">
+            Apply as an organizer. Tell us about your organization and events — we review every
+            application and set up your host dashboard once approved.
+          </p>
+        </div>
+        <RouterLink
+          to="/signup"
+          class="shrink-0 rounded-md bg-teal px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-dark"
+        >
+          Apply to host →
+        </RouterLink>
       </div>
     </section>
   </main>
