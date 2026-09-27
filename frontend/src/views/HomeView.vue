@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { getEvents, createCheckoutSession } from '../lib/api'
 import type { EventDocument } from '../../../shared/types/event'
 
-const { currentUser } = useAuth()
-const router = useRouter()
+const { currentUser, signInAsGuest } = useAuth()
 const events = ref<EventDocument[]>([])
 const error = ref<string | null>(null)
 const buyingTicketTypeId = ref<string | null>(null)
@@ -52,14 +50,12 @@ function categoryBadgeClass(category: string): string {
 }
 
 async function handleBuy(eventId: string, ticketTypeId: string) {
-  if (!currentUser.value) {
-    router.push('/login')
-    return
-  }
-
   error.value = null
   buyingTicketTypeId.value = ticketTypeId
   try {
+    if (!currentUser.value) {
+      await signInAsGuest()
+    }
     const { url } = await createCheckoutSession(eventId, ticketTypeId)
     window.location.href = url
   } catch (err) {

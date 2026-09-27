@@ -1,11 +1,14 @@
 import { ref } from 'vue'
 import type { User } from 'firebase/auth'
 import {
+  EmailAuthProvider,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  linkWithCredential,
   onAuthStateChanged,
   sendEmailVerification,
   sendPasswordResetEmail,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -71,6 +74,27 @@ export function useAuth() {
     }
   }
 
+  async function signInAsGuest() {
+    error.value = null
+    try {
+      await signInAnonymously(auth)
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to start guest checkout'
+      throw err
+    }
+  }
+
+  async function upgradeToAccount(email: string, password: string) {
+    error.value = null
+    if (!auth.currentUser) throw new Error('Not signed in')
+    try {
+      await linkWithCredential(auth.currentUser, EmailAuthProvider.credential(email, password))
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to create account'
+      throw err
+    }
+  }
+
   return {
     currentUser,
     loading,
@@ -81,5 +105,7 @@ export function useAuth() {
     signOutUser,
     sendVerificationEmail,
     resetPassword,
+    signInAsGuest,
+    upgradeToAccount,
   }
 }

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { syncGuest } from '../lib/api'
 
 const email = ref('')
 const password = ref('')
@@ -9,6 +10,11 @@ const confirmPassword = ref('')
 const mismatchError = ref<string | null>(null)
 const { signUp, signInWithGoogle, sendVerificationEmail, error } = useAuth()
 const router = useRouter()
+
+async function redirectAfterAuth() {
+  const guest = await syncGuest()
+  router.push(guest.role === 'host' ? '/dashboard' : '/home')
+}
 
 async function handleSubmit() {
   mismatchError.value = null
@@ -19,12 +25,12 @@ async function handleSubmit() {
 
   await signUp(email.value, password.value)
   await sendVerificationEmail()
-  router.push('/dashboard')
+  await redirectAfterAuth()
 }
 
 async function handleGoogleSignIn() {
   await signInWithGoogle()
-  router.push('/dashboard')
+  await redirectAfterAuth()
 }
 </script>
 

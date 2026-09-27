@@ -84,6 +84,9 @@ async function handleResendVerification() {
           <RouterLink v-if="guest?.role === 'host'" to="/dashboard" class="text-ink-soft hover:text-ink">
             Dashboard
           </RouterLink>
+          <RouterLink v-else to="/home" class="text-ink-soft hover:text-ink">
+            Your tickets
+          </RouterLink>
           <span class="text-ink-soft">{{ firstName }}</span>
 
           <div ref="dropdownRef" class="relative">
@@ -128,7 +131,7 @@ async function handleResendVerification() {
   </header>
 
   <div
-    v-if="currentUser && !currentUser.emailVerified"
+    v-if="currentUser && currentUser.email && !currentUser.emailVerified"
     class="border-b border-card-border bg-[#FDF3E0] px-4 py-2 text-center text-sm text-ink sm:px-6"
   >
     <span>Please verify your email address.</span>

@@ -6,6 +6,7 @@ import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
 export interface MyTicketSummary {
   _id: string
+  eventId: string
   code: string
   status: TicketDocument['status']
   purchasedAt: string
@@ -44,6 +45,7 @@ export default async (req: Request): Promise<Response> => {
 
       return {
         _id: ticket._id.toString(),
+        eventId: ticket.eventId,
         code: ticket.code,
         status: ticket.status,
         purchasedAt: ticket.createdAt,

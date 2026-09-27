@@ -10,6 +10,7 @@ import CreateEventView from '../views/CreateEventView.vue'
 import OrderSuccessView from '../views/OrderSuccessView.vue'
 import EventGuestsView from '../views/EventGuestsView.vue'
 import HostApplyView from '../views/HostApplyView.vue'
+import GuestHomeView from '../views/GuestHomeView.vue'
 
 function waitForAuthReady(): Promise<void> {
   const { loading } = useAuth()
@@ -36,6 +37,13 @@ const router = createRouter({
       name: 'dashboard',
       component: DashboardView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/home',
+      name: 'guest-home',
+      component: GuestHomeView,
+      // Guests never see a forced login page - bounce to public Home instead.
+      meta: { requiresAuth: true, unauthorizedRedirect: '/' },
     },
     {
       path: '/events/new',
@@ -71,7 +79,9 @@ router.beforeEach(async (to) => {
 
   const { currentUser } = useAuth()
   if (!currentUser.value) {
-    return { name: 'login' }
+    return typeof to.meta.unauthorizedRedirect === 'string'
+      ? to.meta.unauthorizedRedirect
+      : { name: 'login' }
   }
 
   return true

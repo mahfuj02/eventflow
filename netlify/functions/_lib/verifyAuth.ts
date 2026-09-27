@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 
 export interface AuthenticatedUser {
   uid: string
-  email: string
+  email?: string
   name?: string
 }
 
@@ -31,13 +31,13 @@ export async function verifyAuth(authHeader: string | null): Promise<Authenticat
       throw new UnauthorizedError('Invalid or expired token')
     })
 
-  if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+  if (typeof payload.sub !== 'string') {
     throw new UnauthorizedError('Token missing required claims')
   }
 
   return {
     uid: payload.sub,
-    email: payload.email,
+    email: typeof payload.email === 'string' ? payload.email : undefined,
     name: typeof payload.name === 'string' ? payload.name : undefined,
   }
 }

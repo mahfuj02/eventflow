@@ -5,7 +5,7 @@ import { auth } from './firebase'
 
 export interface SyncedGuest {
   firebaseUid: string
-  email: string
+  email?: string
   name: string
   role: 'guest' | 'host'
 }
@@ -91,6 +91,7 @@ export async function confirmOrder(sessionId: string): Promise<ConfirmedOrder> {
 
 export interface MyTicketSummary {
   _id: string
+  eventId: string
   code: string
   status: TicketDocument['status']
   purchasedAt: string

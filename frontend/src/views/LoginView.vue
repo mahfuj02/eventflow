@@ -2,20 +2,26 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { syncGuest } from '../lib/api'
 
 const email = ref('')
 const password = ref('')
 const { signIn, signInWithGoogle, error } = useAuth()
 const router = useRouter()
 
+async function redirectAfterAuth() {
+  const guest = await syncGuest()
+  router.push(guest.role === 'host' ? '/dashboard' : '/home')
+}
+
 async function handleSubmit() {
   await signIn(email.value, password.value)
-  router.push('/dashboard')
+  await redirectAfterAuth()
 }
 
 async function handleGoogleSignIn() {
   await signInWithGoogle()
-  router.push('/dashboard')
+  await redirectAfterAuth()
 }
 </script>
 
