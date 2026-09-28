@@ -21,6 +21,13 @@ watch(
       guestFetchAttempted.value = true
       return
     }
+    // Reset (not just set) on every truthy user - App.vue is a
+    // singleton for the whole session, so without this, logging in
+    // after having been logged out (guestFetchAttempted already true
+    // from that earlier null state) would skip re-hiding the nav while
+    // the new profile fetch is in flight, showing stale/null guest data
+    // (email, guest-role link) for a couple seconds instead of hiding.
+    guestFetchAttempted.value = false
     try {
       guest.value = await syncGuest()
     } catch {
