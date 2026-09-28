@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { createEvent } from '../lib/api'
-import { auth, storage } from '../lib/firebase'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { createEvent, getEventForEdit, updateEvent } from '../lib/api'
+import { auth } from '../lib/firebase'
 
 interface TicketRow {
+  id?: string
+  quantitySold?: number
   name: string
   price: string
   quantity: string
@@ -13,6 +14,11 @@ interface TicketRow {
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+const route = useRoute()
+const router = useRouter()
+const eventId = computed(() => (typeof route.params.eventId === 'string' ? route.params.eventId : null))
+const isEditMode = computed(() => eventId.value !== null)
 
 const title = ref('')
 const description = ref('')
@@ -30,7 +36,42 @@ const uploadingBanner = ref(false)
 
 const error = ref<string | null>(null)
 const submitting = ref(false)
-const router = useRouter()
+const loading = ref(false)
+const loadError = ref<string | null>(null)
+
+function toLocalInputValue(iso: string): string {
+  const date = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+onMounted(async () => {
+  if (!eventId.value) return
+
+  loading.value = true
+  try {
+    const event = await getEventForEdit(eventId.value)
+    title.value = event.title
+    description.value = event.description
+    venue.value = event.venue
+    category.value = event.category ?? ''
+    startsAt.value = toLocalInputValue(event.startsAt)
+    endsAt.value = toLocalInputValue(event.endsAt)
+    bannerPreviewUrl.value = event.imageUrl ?? null
+    bannerImageUrl.value = event.imageUrl ?? null
+    ticketRows.value = event.ticketTypes.map((ticketType) => ({
+      id: ticketType.id,
+      quantitySold: ticketType.quantitySold,
+      name: ticketType.name,
+      price: (ticketType.price / 100).toString(),
+      quantity: ticketType.quantityTotal.toString(),
+    }))
+  } catch (err) {
+    loadError.value = err instanceof Error ? err.message : 'Failed to load event'
+  } finally {
+    loading.value = false
+  }
+})
 
 function addTicketRow() {
   ticketRows.value.push({ name: '', price: '', quantity: '' })
@@ -68,10 +109,21 @@ async function handleFileSelect(event: Event) {
   uploadingBanner.value = true
 
   try {
-    const path = `event-banners/${auth.currentUser!.uid}/${crypto.randomUUID()}`
-    const uploadRef = storageRef(storage, path)
-    await uploadBytes(uploadRef, file)
-    bannerImageUrl.value = await getDownloadURL(uploadRef)
+    if (!auth.currentUser) throw new Error('Not signed in')
+    const token = await auth.currentUser.getIdToken()
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await fetch('/.netlify/functions/upload-event-image', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    })
+    if (!response.ok) {
+      throw new Error(await response.text())
+    }
+    const data = (await response.json()) as { url: string }
+    bannerImageUrl.value = data.url
   } catch {
     bannerError.value = 'Failed to upload image'
     if (bannerPreviewUrl.value) URL.revokeObjectURL(bannerPreviewUrl.value)
@@ -93,7 +145,7 @@ async function handleSubmit() {
   error.value = null
   submitting.value = true
   try {
-    await createEvent({
+    const payload = {
       title: title.value,
       description: description.value,
       venue: venue.value,
@@ -102,14 +154,21 @@ async function handleSubmit() {
       startsAt: new Date(startsAt.value).toISOString(),
       endsAt: new Date(endsAt.value).toISOString(),
       ticketTypes: ticketRows.value.map((row) => ({
+        id: row.id,
         name: row.name,
         price: Math.round(Number(row.price) * 100),
         quantityTotal: Number(row.quantity),
       })),
-    })
+    }
+
+    if (isEditMode.value && eventId.value) {
+      await updateEvent(eventId.value, payload)
+    } else {
+      await createEvent(payload)
+    }
     router.push('/dashboard')
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to create event'
+    error.value = err instanceof Error ? err.message : 'Failed to save event'
   } finally {
     submitting.value = false
   }
@@ -119,9 +178,13 @@ async function handleSubmit() {
 <template>
   <main class="min-h-[calc(100svh-65px)] bg-ivory">
     <div class="mx-auto max-w-[720px] px-4 py-10 sm:px-6">
-      <h1 class="font-serif text-3xl font-semibold text-ink">Create event</h1>
+      <h1 class="font-serif text-3xl font-semibold text-ink">{{ isEditMode ? 'Edit event' : 'Create event' }}</h1>
+
+      <p v-if="loading" class="mt-6 text-ink-soft">Loading event...</p>
+      <p v-else-if="loadError" role="alert" class="mt-6 text-red-600">{{ loadError }}</p>
 
       <form
+        v-else
         class="mt-6 rounded-xl border border-card-border bg-white p-6 sm:p-8"
         @submit.prevent="handleSubmit"
       >
@@ -271,15 +334,18 @@ async function handleSubmit() {
                 <input
                   v-model="row.quantity"
                   type="number"
-                  min="1"
+                  :min="row.quantitySold || 1"
                   step="1"
                   required
                   class="mt-1 w-full rounded-lg border border-[#D8D5CA] px-3 py-2 text-ink focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal"
                 />
               </label>
             </div>
+            <p v-if="row.quantitySold" class="mt-3 text-xs text-ink-soft">
+              {{ row.quantitySold }} already sold — quantity can't go below this, and this ticket type can't be removed.
+            </p>
             <button
-              v-if="ticketRows.length > 1"
+              v-else-if="ticketRows.length > 1"
               type="button"
               class="mt-3 text-sm font-medium text-ink-soft hover:text-red-600"
               @click="removeTicketRow(index)"
@@ -303,7 +369,7 @@ async function handleSubmit() {
             :disabled="submitting"
             class="w-full rounded-md bg-teal py-2.5 text-sm font-semibold text-white hover:bg-teal-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
-            {{ submitting ? 'Creating...' : 'Create event' }}
+            {{ submitting ? (isEditMode ? 'Saving...' : 'Creating...') : (isEditMode ? 'Save changes' : 'Create event') }}
           </button>
         </div>
       </form>

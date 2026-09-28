@@ -7,6 +7,7 @@ import {
   getDashboardRevenue,
   getDashboardEvents,
   getDashboardActivity,
+  deleteEvent,
   type SyncedGuest,
   type HostApplication,
   type DashboardSummary,
@@ -25,6 +26,7 @@ const events = ref<DashboardEventRow[]>([])
 const activity = ref<DashboardActivityItem[]>([])
 const dashboardError = ref<string | null>(null)
 const dashboardLoading = ref(true)
+const actionError = ref<string | null>(null)
 
 const today = computed(() =>
   new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -83,6 +85,18 @@ function statusBadgeClass(status: DashboardEventRow['status']): string {
 
 function statusLabel(status: DashboardEventRow['status']): string {
   return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+async function handleDelete(eventId: string) {
+  if (!window.confirm("Delete this event? This can't be undone.")) return
+
+  actionError.value = null
+  try {
+    await deleteEvent(eventId)
+    events.value = events.value.filter((event) => event._id !== eventId)
+  } catch (err) {
+    actionError.value = err instanceof Error ? err.message : 'Failed to delete event'
+  }
 }
 
 function formatRelativeTime(iso: string): string {
@@ -177,6 +191,7 @@ function formatRelativeTime(iso: string): string {
                 <h2 class="font-serif text-lg font-semibold text-ink">Your events</h2>
               </div>
 
+              <p v-if="actionError" role="alert" class="mt-4 text-red-600">{{ actionError }}</p>
               <p v-if="events.length === 0" class="mt-4 text-ink-soft">No events yet.</p>
               <table v-else class="mt-4 w-full text-left text-sm">
                 <thead>
@@ -186,6 +201,7 @@ function formatRelativeTime(iso: string): string {
                     <th class="pb-2 font-medium">Sold</th>
                     <th class="pb-2 font-medium">Revenue</th>
                     <th class="pb-2 font-medium">Status</th>
+                    <th class="pb-2 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,13 +218,28 @@ function formatRelativeTime(iso: string): string {
                         {{ statusLabel(event.status) }}
                       </span>
                     </td>
-                    <td class="py-3 text-right">
-                      <RouterLink
-                        :to="`/events/${event._id}/guests`"
-                        class="text-sm font-medium text-teal hover:underline"
-                      >
-                        View guests
-                      </RouterLink>
+                    <td class="py-3">
+                      <div class="flex items-center justify-end gap-3">
+                        <RouterLink
+                          :to="`/events/${event._id}/guests`"
+                          class="text-sm font-medium text-teal hover:underline"
+                        >
+                          View guests
+                        </RouterLink>
+                        <RouterLink
+                          :to="`/events/${event._id}/edit`"
+                          class="text-sm font-medium text-teal hover:underline"
+                        >
+                          Edit
+                        </RouterLink>
+                        <button
+                          type="button"
+                          class="text-sm font-medium text-ink-soft hover:text-red-600"
+                          @click="handleDelete(event._id)"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 </tbody>

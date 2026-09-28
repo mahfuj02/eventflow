@@ -33,6 +33,7 @@ export async function syncGuest(): Promise<SyncedGuest> {
 }
 
 export interface TicketTypeInput {
+  id?: string
   name: string
   price: number
   quantityTotal: number
@@ -56,6 +57,31 @@ export async function createEvent(input: CreateEventInput): Promise<EventDocumen
     body: JSON.stringify(input),
   })
   return response.json() as Promise<EventDocument>
+}
+
+export async function getEventForEdit(eventId: string): Promise<EventDocument> {
+  const response = await authedFetch(
+    `/.netlify/functions/get-event-for-edit?eventId=${encodeURIComponent(eventId)}`,
+  )
+  return response.json() as Promise<EventDocument>
+}
+
+export async function updateEvent(eventId: string, input: CreateEventInput): Promise<EventDocument> {
+  const response = await authedFetch(
+    `/.netlify/functions/update-event?eventId=${encodeURIComponent(eventId)}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    },
+  )
+  return response.json() as Promise<EventDocument>
+}
+
+export async function deleteEvent(eventId: string): Promise<void> {
+  await authedFetch(`/.netlify/functions/delete-event?eventId=${encodeURIComponent(eventId)}`, {
+    method: 'DELETE',
+  })
 }
 
 export async function getMyEvents(): Promise<EventDocument[]> {
