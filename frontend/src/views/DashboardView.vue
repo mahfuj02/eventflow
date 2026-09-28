@@ -27,6 +27,7 @@ const activity = ref<DashboardActivityItem[]>([])
 const dashboardError = ref<string | null>(null)
 const dashboardLoading = ref(true)
 const actionError = ref<string | null>(null)
+const showApprovalCongrats = ref(false)
 
 const today = computed(() =>
   new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -42,12 +43,17 @@ onMounted(async () => {
     return
   }
 
+  try {
+    hostApplication.value = await getMyHostApplication()
+  } catch {
+    // non-critical, leave as null (treated as "no application yet")
+  }
+
+  if (guest.value.role === 'host' && hostApplication.value?.status === 'approved') {
+    checkShowApprovalCongrats(hostApplication.value._id)
+  }
+
   if (guest.value.role !== 'host') {
-    try {
-      hostApplication.value = await getMyHostApplication()
-    } catch {
-      // non-critical, leave as null (treated as "no application yet")
-    }
     return
   }
 
@@ -68,6 +74,30 @@ onMounted(async () => {
     dashboardLoading.value = false
   }
 })
+
+function approvalSeenKey(applicationId: string): string {
+  return `eventflow-host-approved-seen-${applicationId}`
+}
+
+function checkShowApprovalCongrats(applicationId: string) {
+  try {
+    if (!localStorage.getItem(approvalSeenKey(applicationId))) {
+      showApprovalCongrats.value = true
+    }
+  } catch {
+    // localStorage unavailable - skip rather than risk showing it every visit
+  }
+}
+
+function dismissApprovalCongrats() {
+  showApprovalCongrats.value = false
+  if (!hostApplication.value) return
+  try {
+    localStorage.setItem(approvalSeenKey(hostApplication.value._id), 'true')
+  } catch {
+    // ignore - worst case it shows again next visit
+  }
+}
 
 function formatPrice(cents: number): string {
   return `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
@@ -117,6 +147,28 @@ function formatRelativeTime(iso: string): string {
       <p v-if="loadError" role="alert" class="text-red-600">{{ loadError }}</p>
 
       <template v-else-if="guest">
+        <div
+          v-if="showApprovalCongrats"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          @click.self="dismissApprovalCongrats"
+        >
+          <div class="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl">
+            <p class="text-3xl">🎉</p>
+            <h2 class="mt-2 font-serif text-xl font-semibold text-ink">You're approved!</h2>
+            <p class="mt-2 text-sm text-ink-soft">
+              Your application to host on EventFlow has been approved. You can now create and manage
+              events from your dashboard.
+            </p>
+            <button
+              type="button"
+              class="mt-5 w-full rounded-md bg-teal py-2.5 text-sm font-semibold text-white hover:bg-teal-dark"
+              @click="dismissApprovalCongrats"
+            >
+              Let's go
+            </button>
+          </div>
+        </div>
+
         <template v-if="guest.role === 'host'">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
