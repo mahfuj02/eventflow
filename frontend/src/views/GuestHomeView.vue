@@ -7,6 +7,7 @@ import type { EventDocument } from '../../../shared/types/event'
 const { currentUser, upgradeToAccount } = useAuth()
 
 const guest = ref<SyncedGuest | null>(null)
+const guestFetchAttempted = ref(false)
 const loadError = ref<string | null>(null)
 const tickets = ref<MyTicketSummary[]>([])
 const ticketsError = ref<string | null>(null)
@@ -19,7 +20,7 @@ const accountConfirmPassword = ref('')
 const accountError = ref<string | null>(null)
 const upgrading = ref(false)
 
-const firstName = computed(() => (guest.value?.name || 'there').split(' ')[0])
+const firstName = computed(() => (guest.value?.name || currentUser.value?.email || 'there').split(' ')[0])
 
 onMounted(async () => {
   try {
@@ -27,6 +28,8 @@ onMounted(async () => {
     accountEmail.value = guest.value.email ?? ''
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Failed to load profile'
+  } finally {
+    guestFetchAttempted.value = true
   }
 
   try {
@@ -86,7 +89,10 @@ async function handleCreateAccount() {
 <template>
   <main class="min-h-[calc(100svh-65px)] bg-ivory">
     <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <h1 class="font-serif text-3xl font-semibold text-ink">Welcome back, {{ firstName }}</h1>
+      <h1 class="font-serif text-3xl font-semibold text-ink">
+        Welcome back<template v-if="guestFetchAttempted">, {{ firstName }}</template
+        ><span v-else class="font-normal text-ink-soft">, Loading…</span>
+      </h1>
       <p class="mt-1 text-ink-soft">Here's what's coming up, and what you've already booked.</p>
       <p v-if="loadError" role="alert" class="mt-4 text-red-600">{{ loadError }}</p>
 

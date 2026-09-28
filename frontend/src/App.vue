@@ -38,6 +38,7 @@ watch(
 const authReady = computed(() => !loading.value && (!currentUser.value || guestFetchAttempted.value))
 
 const firstName = computed(() => {
+  if (!guestFetchAttempted.value) return 'Loading…'
   const name = guest.value?.name || currentUser.value?.email || ''
   return name.split(' ')[0]
 })
