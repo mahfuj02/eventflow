@@ -195,3 +195,50 @@ export async function getMyHostApplication(): Promise<HostApplication | null> {
   const response = await authedFetch('/.netlify/functions/get-my-host-application')
   return response.json() as Promise<HostApplication | null>
 }
+
+export interface DashboardSummary {
+  totalTicketsSold: number
+  totalRevenue: number
+  activeEvents: number
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const response = await authedFetch('/.netlify/functions/get-dashboard-summary')
+  return response.json() as Promise<DashboardSummary>
+}
+
+export interface DashboardRevenueMonth {
+  label: string
+  revenue: number
+}
+
+export async function getDashboardRevenue(): Promise<{ months: DashboardRevenueMonth[] }> {
+  const response = await authedFetch('/.netlify/functions/get-dashboard-revenue')
+  return response.json() as Promise<{ months: DashboardRevenueMonth[] }>
+}
+
+export interface DashboardEventRow {
+  _id: string
+  title: string
+  startsAt: string
+  sold: number
+  capacity: number
+  revenue: number
+  status: EventDocument['status']
+}
+
+export async function getDashboardEvents(): Promise<{ events: DashboardEventRow[] }> {
+  const response = await authedFetch('/.netlify/functions/get-dashboard-events')
+  return response.json() as Promise<{ events: DashboardEventRow[] }>
+}
+
+export interface DashboardActivityItem {
+  type: 'event_created' | 'new_order' | 'guest_profile_created'
+  label: string
+  timestamp: string
+}
+
+export async function getDashboardActivity(): Promise<{ activity: DashboardActivityItem[] }> {
+  const response = await authedFetch('/.netlify/functions/get-dashboard-activity')
+  return response.json() as Promise<{ activity: DashboardActivityItem[] }>
+}
