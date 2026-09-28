@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { getEvent, createCheckoutSession, type EventWithOrganizer } from '../lib/api'
+import { getEvent, getMyTickets, createCheckoutSession, type EventWithOrganizer } from '../lib/api'
 
 const route = useRoute()
 const { currentUser, signInAsGuest } = useAuth()
@@ -12,6 +12,7 @@ const notFound = ref(false)
 const error = ref<string | null>(null)
 const submitting = ref(false)
 const quantities = reactive<Record<string, number>>({})
+const myTicketCountForEvent = ref(0)
 
 const eventId = computed(() => {
   const id = route.params.eventId
@@ -26,6 +27,16 @@ onMounted(async () => {
     }
   } catch {
     notFound.value = true
+    return
+  }
+
+  if (currentUser.value) {
+    try {
+      const myTickets = await getMyTickets()
+      myTicketCountForEvent.value = myTickets.filter((t) => t.eventId === eventId.value).length
+    } catch {
+      // non-critical, badge just stays hidden
+    }
   }
 })
 
@@ -151,6 +162,14 @@ async function handleCheckout() {
         </div>
 
         <div class="lg:sticky lg:top-6 lg:self-start">
+          <div
+            v-if="myTicketCountForEvent > 0"
+            class="mb-4 rounded-lg bg-teal/10 px-4 py-3 text-sm font-medium text-teal-dark"
+          >
+            ✓ You're going — you already have {{ myTicketCountForEvent }}
+            {{ myTicketCountForEvent === 1 ? 'ticket' : 'tickets' }} for this event
+          </div>
+
           <div class="rounded-xl border border-card-border bg-white p-6">
             <h2 class="font-serif text-lg font-semibold text-ink">Select tickets</h2>
 

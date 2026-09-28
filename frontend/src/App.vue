@@ -124,6 +124,14 @@ async function handleResendVerification() {
                 v-if="dropdownOpen"
                 class="absolute right-0 mt-2 w-40 rounded-md border border-card-border bg-white py-1 shadow-lg"
               >
+                <RouterLink
+                  v-if="guest?.role === 'host'"
+                  to="/home"
+                  class="block w-full px-4 py-2 text-left text-sm text-ink hover:bg-ivory"
+                  @click="dropdownOpen = false"
+                >
+                  Your tickets
+                </RouterLink>
                 <button
                   type="button"
                   class="block w-full px-4 py-2 text-left text-sm text-ink hover:bg-ivory"

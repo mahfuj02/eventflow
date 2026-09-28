@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import { syncGuest, getMyTickets, getEvents, type SyncedGuest, type MyTicketSummary } from '../lib/api'
+import {
+  syncGuest,
+  getMyTickets,
+  getEvents,
+  getMyHostApplication,
+  type SyncedGuest,
+  type MyTicketSummary,
+  type HostApplication,
+} from '../lib/api'
 import type { EventDocument } from '../../../shared/types/event'
 
 const { currentUser, upgradeToAccount } = useAuth()
@@ -12,6 +20,7 @@ const loadError = ref<string | null>(null)
 const tickets = ref<MyTicketSummary[]>([])
 const ticketsError = ref<string | null>(null)
 const otherEvents = ref<EventDocument[]>([])
+const hostApplication = ref<HostApplication | null>(null)
 
 const showCreateAccountForm = ref(false)
 const accountEmail = ref('')
@@ -44,6 +53,12 @@ onMounted(async () => {
     otherEvents.value = allEvents.filter((e) => !ownedEventIds.has(e._id))
   } catch {
     // non-critical, "More events for you" just stays empty
+  }
+
+  try {
+    hostApplication.value = await getMyHostApplication()
+  } catch {
+    // non-critical, treated as "no application yet"
   }
 })
 
@@ -222,6 +237,33 @@ async function handleCreateAccount() {
               </div>
             </div>
           </article>
+        </div>
+      </template>
+
+      <template v-if="guest?.role !== 'host'">
+        <div
+          v-if="hostApplication?.status === 'pending'"
+          class="mt-10 rounded-2xl bg-[#e3f5ee] px-6 py-8 text-sm text-teal-dark sm:px-10"
+        >
+          Your host application is pending review. We'll let you know once it's approved.
+        </div>
+        <div
+          v-else
+          class="mt-10 flex flex-col items-start gap-4 rounded-2xl bg-[#e3f5ee] px-6 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-10"
+        >
+          <div>
+            <h2 class="font-serif text-xl font-semibold text-ink">Bring your event to EventFlow</h2>
+            <p class="mt-2 max-w-xl text-sm text-teal-dark">
+              Apply as an organizer. Tell us about your organization and events — we review every
+              application and set up your host dashboard once approved.
+            </p>
+          </div>
+          <RouterLink
+            to="/apply-to-host"
+            class="shrink-0 rounded-md bg-teal px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-dark"
+          >
+            Apply to host →
+          </RouterLink>
         </div>
       </template>
     </div>
