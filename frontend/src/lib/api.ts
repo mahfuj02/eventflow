@@ -43,6 +43,7 @@ export interface CreateEventInput {
   description: string
   venue: string
   category?: string
+  imageUrl?: string
   startsAt: string
   endsAt: string
   ticketTypes: TicketTypeInput[]

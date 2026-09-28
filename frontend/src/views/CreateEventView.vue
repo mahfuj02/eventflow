@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { createEvent } from '../lib/api'
+import { auth, storage } from '../lib/firebase'
 
 interface TicketRow {
   name: string
   price: string
   quantity: string
 }
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 const title = ref('')
 const description = ref('')
@@ -16,6 +21,12 @@ const category = ref('')
 const startsAt = ref('')
 const endsAt = ref('')
 const ticketRows = ref<TicketRow[]>([{ name: '', price: '', quantity: '' }])
+
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const bannerPreviewUrl = ref<string | null>(null)
+const bannerImageUrl = ref<string | null>(null)
+const bannerError = ref<string | null>(null)
+const uploadingBanner = ref(false)
 
 const error = ref<string | null>(null)
 const submitting = ref(false)
@@ -29,6 +40,55 @@ function removeTicketRow(index: number) {
   ticketRows.value.splice(index, 1)
 }
 
+function triggerFileInput() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  bannerError.value = null
+
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    bannerError.value = 'Please choose a JPG, PNG, or WEBP image'
+    input.value = ''
+    return
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    bannerError.value = 'Image must be 5MB or smaller'
+    input.value = ''
+    return
+  }
+
+  if (bannerPreviewUrl.value) URL.revokeObjectURL(bannerPreviewUrl.value)
+  bannerPreviewUrl.value = URL.createObjectURL(file)
+  bannerImageUrl.value = null
+  uploadingBanner.value = true
+
+  try {
+    const path = `event-banners/${auth.currentUser!.uid}/${crypto.randomUUID()}`
+    const uploadRef = storageRef(storage, path)
+    await uploadBytes(uploadRef, file)
+    bannerImageUrl.value = await getDownloadURL(uploadRef)
+  } catch {
+    bannerError.value = 'Failed to upload image'
+    if (bannerPreviewUrl.value) URL.revokeObjectURL(bannerPreviewUrl.value)
+    bannerPreviewUrl.value = null
+  } finally {
+    uploadingBanner.value = false
+    input.value = ''
+  }
+}
+
+function removeBanner() {
+  if (bannerPreviewUrl.value) URL.revokeObjectURL(bannerPreviewUrl.value)
+  bannerPreviewUrl.value = null
+  bannerImageUrl.value = null
+  bannerError.value = null
+}
+
 async function handleSubmit() {
   error.value = null
   submitting.value = true
@@ -38,6 +98,7 @@ async function handleSubmit() {
       description: description.value,
       venue: venue.value,
       category: category.value || undefined,
+      imageUrl: bannerImageUrl.value ?? undefined,
       startsAt: new Date(startsAt.value).toISOString(),
       endsAt: new Date(endsAt.value).toISOString(),
       ticketTypes: ticketRows.value.map((row) => ({
@@ -65,6 +126,58 @@ async function handleSubmit() {
         @submit.prevent="handleSubmit"
       >
         <div class="flex flex-col gap-5">
+          <div>
+            <label class="block text-sm font-medium text-ink">Event banner (optional)</label>
+            <div class="mt-1">
+              <button
+                v-if="!bannerPreviewUrl"
+                type="button"
+                class="flex h-40 w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#D8D5CA] text-ink-soft hover:border-teal hover:text-teal"
+                @click="triggerFileInput"
+              >
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3 4.5h18a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 18V6A1.5 1.5 0 0 1 3 4.5Zm12 5.25a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                </svg>
+                <span class="text-sm font-medium">Add a banner image</span>
+              </button>
+
+              <div v-else class="relative h-40 w-full overflow-hidden rounded-lg border border-card-border">
+                <img :src="bannerPreviewUrl" alt="" class="h-full w-full object-cover" />
+                <div class="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-black/50 to-transparent p-2">
+                  <button
+                    type="button"
+                    class="rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-ink hover:bg-white"
+                    @click="triggerFileInput"
+                  >
+                    Change
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-ink hover:bg-white"
+                    @click="removeBanner"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div
+                  v-if="uploadingBanner"
+                  class="absolute inset-0 flex items-center justify-center bg-white/60 text-sm font-medium text-ink"
+                >
+                  Uploading...
+                </div>
+              </div>
+
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="hidden"
+                @change="handleFileSelect"
+              />
+              <p v-if="bannerError" role="alert" class="mt-1 text-sm text-red-600">{{ bannerError }}</p>
+            </div>
+          </div>
+
           <label class="block text-sm font-medium text-ink">
             Title
             <input

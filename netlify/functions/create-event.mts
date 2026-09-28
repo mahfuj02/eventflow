@@ -14,6 +14,7 @@ interface CreateEventBody {
   description?: unknown
   venue?: unknown
   category?: unknown
+  imageUrl?: unknown
   startsAt?: unknown
   endsAt?: unknown
   ticketTypes?: TicketTypeBody[]
@@ -97,6 +98,7 @@ export default async (req: Request): Promise<Response> => {
       createdAt: now,
       updatedAt: now,
       ...(isNonEmptyString(body.category) ? { category: body.category.trim() } : {}),
+      ...(isNonEmptyString(body.imageUrl) ? { imageUrl: body.imageUrl.trim() } : {}),
     }
 
     const collection = db.collection<Omit<EventDocument, '_id'>>('events')

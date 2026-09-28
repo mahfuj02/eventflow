@@ -198,7 +198,8 @@ async function handleCreateAccount() {
             :key="event._id"
             class="overflow-hidden rounded-xl border border-card-border bg-white"
           >
-            <div class="h-32 bg-[#efece4]"></div>
+            <img v-if="event.imageUrl" :src="event.imageUrl" alt="" class="h-32 w-full object-cover" />
+            <div v-else class="h-32 bg-[#efece4]"></div>
             <div class="p-4">
               <p class="font-semibold text-ink">{{ event.title }}</p>
               <p class="mt-1 text-sm text-ink-soft">{{ formatDate(event.startsAt) }}</p>
