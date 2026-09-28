@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb'
 import type { GuestDocument } from '../../shared/types/guest'
 import type { HostApplicationDocument } from '../../shared/types/hostApplication'
 import { getDb } from './_lib/mongo'
+import { getResend, NOTIFICATION_FROM } from './_lib/resend'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
 interface ApproveBody {
@@ -42,6 +43,18 @@ export default async (req: Request): Promise<Response> => {
       { firebaseUid: application.userId },
       { $set: { role: 'host', updatedAt: now } },
     )
+
+    try {
+      const origin = new URL(req.url).origin
+      await getResend().emails.send({
+        from: NOTIFICATION_FROM,
+        to: application.email,
+        subject: "You're approved to host on EventFlow",
+        text: `Good news — your application to host on EventFlow has been approved. You can now create and manage events from your dashboard.\n\n${origin}/dashboard`,
+      })
+    } catch (err) {
+      console.error('Failed to send host approval email:', err)
+    }
 
     return Response.json({ ok: true })
   } catch (err) {

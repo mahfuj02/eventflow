@@ -1,5 +1,6 @@
 import type { HostApplicationDocument } from '../../shared/types/hostApplication'
 import { getDb } from './_lib/mongo'
+import { getResend, NOTIFICATION_FROM } from './_lib/resend'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
 interface SubmitApplicationBody {
@@ -71,6 +72,27 @@ export default async (req: Request): Promise<Response> => {
     }
 
     const result = await applications.insertOne(application)
+
+    try {
+      await getResend().emails.send({
+        from: NOTIFICATION_FROM,
+        to: process.env.ADMIN_EMAIL!,
+        subject: `New host application — ${application.orgName}`,
+        text: [
+          `Organization: ${application.orgName}`,
+          `Category: ${application.category}`,
+          `Expected attendees: ${application.expectedAttendees}`,
+          `Contact: ${application.contactName} (${application.role})`,
+          `Email: ${application.email}`,
+          `Phone: ${application.phone}`,
+          ``,
+          `Message:`,
+          application.message,
+        ].join('\n'),
+      })
+    } catch (err) {
+      console.error('Failed to send host application notification email:', err)
+    }
 
     return Response.json({ _id: result.insertedId.toString(), ...application })
   } catch (err) {
