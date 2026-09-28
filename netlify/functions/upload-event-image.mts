@@ -1,5 +1,5 @@
 import type { GuestDocument } from '../../shared/types/guest'
-import { getBucket } from './_lib/firebaseAdmin'
+import { getCloudinary } from './_lib/cloudinary'
 import { getDb } from './_lib/mongo'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
@@ -33,13 +33,15 @@ export default async (req: Request): Promise<Response> => {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    const path = `event-banners/${user.uid}/${crypto.randomUUID()}`
-    const bucket = getBucket()
-    const bucketFile = bucket.file(path)
-    await bucketFile.save(buffer, { contentType: file.type })
-    await bucketFile.makePublic()
+    const dataUri = `data:${file.type};base64,${buffer.toString('base64')}`
 
-    return Response.json({ url: `https://storage.googleapis.com/${bucket.name}/${path}` })
+    const cloudinary = getCloudinary()
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: `event-banners/${user.uid}`,
+      public_id: crypto.randomUUID(),
+    })
+
+    return Response.json({ url: result.secure_url })
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return new Response(err.message, { status: 401 })
