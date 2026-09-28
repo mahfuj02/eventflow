@@ -69,12 +69,16 @@ export default async (req: Request): Promise<Response> => {
       status: 'pending',
       createdAt: now,
       updatedAt: now,
+      approvalToken: crypto.randomUUID(),
+      approvalTokenUsed: false,
     }
 
     const result = await applications.insertOne(application)
 
     try {
-      await getResend().emails.send({
+      const origin = new URL(req.url).origin
+      const approveLink = `${origin}/.netlify/functions/approve-application-by-link?applicationId=${result.insertedId.toString()}&token=${application.approvalToken}`
+      const sendResult = await getResend().emails.send({
         from: NOTIFICATION_FROM,
         to: process.env.ADMIN_EMAIL!,
         subject: `New host application — ${application.orgName}`,
@@ -88,13 +92,22 @@ export default async (req: Request): Promise<Response> => {
           ``,
           `Message:`,
           application.message,
+          ``,
+          `Approve this application: ${approveLink}`,
+          `(link expires in 7 days)`,
         ].join('\n'),
       })
+      if (sendResult.error) {
+        console.error('Failed to send host application notification email:', sendResult.error)
+      } else {
+        console.log('Sent host application notification email:', sendResult.data?.id)
+      }
     } catch (err) {
       console.error('Failed to send host application notification email:', err)
     }
 
-    return Response.json({ _id: result.insertedId.toString(), ...application })
+    const { approvalToken: _approvalToken, ...publicApplication } = application
+    return Response.json({ _id: result.insertedId.toString(), ...publicApplication })
   } catch (err) {
     if (err instanceof UnauthorizedError) {
       return new Response(err.message, { status: 401 })

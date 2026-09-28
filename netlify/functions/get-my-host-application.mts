@@ -21,7 +21,7 @@ export default async (req: Request): Promise<Response> => {
       return Response.json(null)
     }
 
-    const { _id, ...rest } = application
+    const { _id, approvalToken: _approvalToken, ...rest } = application
     return Response.json({ _id: _id.toString(), ...rest })
   } catch (err) {
     if (err instanceof UnauthorizedError) {

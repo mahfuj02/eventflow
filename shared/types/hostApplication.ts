@@ -13,4 +13,6 @@ export interface HostApplicationDocument extends MongoDocument {
   phone: string;
   message: string;
   status: HostApplicationStatus;
+  approvalToken: string;
+  approvalTokenUsed: boolean;
 }
