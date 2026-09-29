@@ -68,10 +68,18 @@ async function handleSubmit() {
           <p v-if="existingApplication.status === 'pending'" class="text-ink">
             Your application is under review. We'll be in touch once it's approved.
           </p>
-          <p v-else-if="existingApplication.status === 'approved'" class="text-ink">
-            You're an approved host!
-            <RouterLink to="/events/new" class="text-teal underline">Create an event →</RouterLink>
-          </p>
+          <template v-else-if="existingApplication.status === 'approved'">
+            <p class="text-ink">
+              You're approved to host on EventFlow! Head to your dashboard to create your first
+              event.
+            </p>
+            <RouterLink
+              to="/dashboard"
+              class="mt-4 inline-block rounded-md bg-teal px-4 py-2 text-sm font-semibold text-white hover:bg-teal-dark"
+            >
+              Go to dashboard
+            </RouterLink>
+          </template>
           <p v-else class="text-ink">
             Your application wasn't approved. Contact us if you have questions.
           </p>
