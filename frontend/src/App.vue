@@ -103,11 +103,9 @@ async function handleResendVerification() {
 
         <div class="flex items-center gap-4 text-sm font-medium">
           <template v-if="currentUser">
+            <RouterLink to="/home" class="text-ink-soft hover:text-ink">My Tickets</RouterLink>
             <RouterLink v-if="guest?.role === 'host'" to="/dashboard" class="text-ink-soft hover:text-ink">
               Dashboard
-            </RouterLink>
-            <RouterLink v-else to="/home" class="text-ink-soft hover:text-ink">
-              Your tickets
             </RouterLink>
             <span class="text-ink-soft">{{ firstName }}</span>
 
@@ -124,20 +122,12 @@ async function handleResendVerification() {
                 v-if="dropdownOpen"
                 class="absolute right-0 mt-2 w-40 rounded-md border border-card-border bg-white py-1 shadow-lg"
               >
-                <RouterLink
-                  v-if="guest?.role === 'host'"
-                  to="/home"
-                  class="block w-full px-4 py-2 text-left text-sm text-ink hover:bg-ivory"
-                  @click="dropdownOpen = false"
-                >
-                  Your tickets
-                </RouterLink>
                 <button
                   type="button"
                   class="block w-full px-4 py-2 text-left text-sm text-ink hover:bg-ivory"
                   @click="handleSignOut"
                 >
-                  Sign out
+                  Log out
                 </button>
               </div>
             </div>
