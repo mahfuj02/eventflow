@@ -36,17 +36,20 @@ behind these choices.
 
 Two terminals:
 ```
-# Terminal 1 - serve the app with both .env and .env.test loaded
-netlify dev
+# Terminal 1 - serves the app with .env.test AND .env merged
+# (.env.test is loaded first, so ITS values win on overlap - e.g.
+# MONGODB_DB_NAME/ADMIN_EMAIL - dotenv-cli gives priority to whichever
+# -e file is listed first, not the last)
+npm run dev:e2e
 
 # Terminal 2
 npm run test:e2e
 ```
-`netlify dev` needs the test env vars active for the run (either merge
-`.env.test` into your `.env` temporarily, or use `netlify dev --context test`
-with test values set as a separate deploy context in Netlify's own
-project settings — either approach is a Netlify Dev configuration
-question, not something this suite mandates).
+`npm run dev:e2e` runs `netlify dev` through `dotenv-cli` so both files
+load together — `netlify dev` alone only ever reads `.env`, never
+`.env.test`, so plain `netlify dev` will run against your real database
+instead. Use `npm run dev:e2e` specifically whenever you intend to run
+the e2e suite; use plain `netlify dev` for normal app development.
 
 `npm run test:e2e:ui` opens Playwright's interactive UI mode instead,
 useful while writing or debugging a test.
