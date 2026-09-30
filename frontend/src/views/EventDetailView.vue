@@ -2,7 +2,8 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { getEvent, getMyTickets, createCheckoutSession, type EventWithOrganizer } from '../lib/api'
+import { getEvent, getMyTickets, getEvents, createCheckoutSession, type EventWithOrganizer } from '../lib/api'
+import type { EventDocument } from '../../../shared/types/event'
 
 const route = useRoute()
 const { currentUser, signInAsGuest } = useAuth()
@@ -13,10 +14,16 @@ const error = ref<string | null>(null)
 const submitting = ref(false)
 const quantities = reactive<Record<string, number>>({})
 const myTicketCountForEvent = ref(0)
+const otherUpcomingEvents = ref<EventDocument[]>([])
 
 const eventId = computed(() => {
   const id = route.params.eventId
   return typeof id === 'string' ? id : ''
+})
+
+const isPast = computed(() => {
+  if (!data.value) return false
+  return new Date(data.value.event.endsAt) < new Date()
 })
 
 onMounted(async () => {
@@ -36,6 +43,15 @@ onMounted(async () => {
       myTicketCountForEvent.value = myTickets.filter((t) => t.eventId === eventId.value).length
     } catch {
       // non-critical, badge just stays hidden
+    }
+  }
+
+  if (isPast.value) {
+    try {
+      const allEvents = await getEvents()
+      otherUpcomingEvents.value = allEvents.filter((e) => e._id !== eventId.value).slice(0, 3)
+    } catch {
+      // non-critical, "you might also like" just stays empty
     }
   }
 })
@@ -170,7 +186,29 @@ async function handleCheckout() {
             {{ myTicketCountForEvent === 1 ? 'ticket' : 'tickets' }} for this event
           </div>
 
-          <div class="rounded-xl border border-card-border bg-white p-6">
+          <div v-if="isPast" class="rounded-xl border border-card-border bg-white p-6">
+            <h2 class="font-serif text-lg font-semibold text-ink">This event has ended</h2>
+            <p class="mt-2 text-sm text-ink-soft">Tickets are no longer available for this event.</p>
+
+            <template v-if="otherUpcomingEvents.length > 0">
+              <h3 class="mt-6 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                You might also like
+              </h3>
+              <div class="mt-3 flex flex-col gap-3">
+                <RouterLink
+                  v-for="event in otherUpcomingEvents"
+                  :key="event._id"
+                  :to="`/events/${event._id}`"
+                  class="block rounded-lg border border-card-border p-3 hover:border-teal"
+                >
+                  <p class="font-medium text-ink">{{ event.title }}</p>
+                  <p class="text-sm text-ink-soft">{{ formatDateTime(event.startsAt) }}</p>
+                </RouterLink>
+              </div>
+            </template>
+          </div>
+
+          <div v-else class="rounded-xl border border-card-border bg-white p-6">
             <h2 class="font-serif text-lg font-semibold text-ink">Select tickets</h2>
 
             <div

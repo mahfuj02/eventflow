@@ -11,7 +11,7 @@ export default async (req: Request): Promise<Response> => {
     const collection = db.collection<Omit<EventDocument, '_id'>>('events')
 
     const events = await collection
-      .find({ status: 'published' })
+      .find({ status: 'published', endsAt: { $gte: new Date().toISOString() } })
       .sort({ startsAt: 1 })
       .toArray()
 

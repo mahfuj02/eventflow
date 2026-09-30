@@ -252,6 +252,7 @@ export interface DashboardEventRow {
   capacity: number
   revenue: number
   status: EventDocument['status']
+  isPast: boolean
 }
 
 export async function getDashboardEvents(): Promise<{ events: DashboardEventRow[] }> {
