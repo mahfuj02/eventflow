@@ -26,12 +26,6 @@ export async function payWithTestCard(page: Page, email: string): Promise<void> 
   if (await phone.isVisible().catch(() => false)) {
     await phone.fill('2015550123')
   }
-  // Honest disclosure, since Playwright genuinely is automated - Stripe's
-  // own checkbox for it, shown for detected automated sessions.
-  const aiAgentDisclosure = page.getByRole('checkbox', { name: /AI agent acting on behalf/i })
-  if (await aiAgentDisclosure.isVisible().catch(() => false)) {
-    await aiAgentDisclosure.check()
-  }
 
   await page.getByRole('button', { name: /pay/i }).click()
   await page.waitForURL(/\/orders\/success\?session_id=/, { timeout: 30_000 })
