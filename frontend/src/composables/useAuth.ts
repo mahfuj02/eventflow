@@ -48,7 +48,9 @@ export function useAuth() {
   async function signInWithGoogle() {
     error.value = null
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider())
+      const provider = new GoogleAuthProvider()
+      provider.setCustomParameters({ prompt: 'select_account' })
+      await signInWithPopup(auth, provider)
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Google sign in failed'
       throw err
