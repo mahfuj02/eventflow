@@ -180,13 +180,14 @@ async function handleCheckout() {
         <div class="lg:sticky lg:top-6 lg:self-start">
           <div
             v-if="myTicketCountForEvent > 0"
+            data-testid="you-are-going-badge"
             class="mb-4 rounded-lg bg-teal/10 px-4 py-3 text-sm font-medium text-teal-dark"
           >
             ✓ You're going — you already have {{ myTicketCountForEvent }}
             {{ myTicketCountForEvent === 1 ? 'ticket' : 'tickets' }} for this event
           </div>
 
-          <div v-if="isPast" class="rounded-xl border border-card-border bg-white p-6">
+          <div v-if="isPast" data-testid="event-ended-panel" class="rounded-xl border border-card-border bg-white p-6">
             <h2 class="font-serif text-lg font-semibold text-ink">This event has ended</h2>
             <p class="mt-2 text-sm text-ink-soft">Tickets are no longer available for this event.</p>
 
@@ -229,15 +230,17 @@ async function handleCheckout() {
               <div class="flex items-center gap-2">
                 <button
                   type="button"
+                  :data-testid="`ticket-decrement-${ticketType.id}`"
                   :disabled="quantities[ticketType.id] === 0"
                   class="flex h-8 w-8 items-center justify-center rounded-md border border-[#D8D5CA] text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   @click="decrement(ticketType.id)"
                 >
                   −
                 </button>
-                <span class="w-6 text-center text-ink">{{ quantities[ticketType.id] }}</span>
+                <span :data-testid="`ticket-quantity-${ticketType.id}`" class="w-6 text-center text-ink">{{ quantities[ticketType.id] }}</span>
                 <button
                   type="button"
+                  :data-testid="`ticket-increment-${ticketType.id}`"
                   :disabled="quantities[ticketType.id] >= remaining(ticketType.id)"
                   class="flex h-8 w-8 items-center justify-center rounded-md border border-[#D8D5CA] text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   @click="increment(ticketType.id)"
@@ -256,6 +259,7 @@ async function handleCheckout() {
 
             <button
               type="button"
+              data-testid="checkout-button"
               :disabled="totalQuantity === 0 || submitting"
               class="mt-4 w-full rounded-md bg-teal py-2.5 text-sm font-semibold text-white hover:bg-teal-dark disabled:cursor-not-allowed disabled:bg-gray-300"
               @click="handleCheckout"

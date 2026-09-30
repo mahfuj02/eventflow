@@ -49,6 +49,7 @@ onMounted(async () => {
           <div
             v-for="ticket in result.tickets"
             :key="ticket._id"
+            data-testid="ticket-code-card"
             class="rounded-lg bg-ivory px-4 py-3 text-left"
           >
             <p class="text-xs uppercase tracking-wide text-ink-soft">Ticket code</p>

@@ -233,6 +233,7 @@ async function handleSubmit() {
               <input
                 ref="fileInputRef"
                 type="file"
+                data-testid="banner-file-input"
                 accept="image/jpeg,image/png,image/webp"
                 class="hidden"
                 @change="handleFileSelect"

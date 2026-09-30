@@ -1,0 +1,69 @@
+name: E2E tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      MONGODB_DB_NAME: eventflow_test
+      FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+      CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+      CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ADMIN_EMAIL: ${{ secrets.E2E_HOST_EMAIL }}
+      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      E2E_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+      E2E_GUEST_EMAIL: ${{ secrets.E2E_GUEST_EMAIL }}
+      E2E_GUEST_PASSWORD: ${{ secrets.E2E_GUEST_PASSWORD }}
+      E2E_HOST_EMAIL: ${{ secrets.E2E_HOST_EMAIL }}
+      E2E_HOST_PASSWORD: ${{ secrets.E2E_HOST_PASSWORD }}
+      E2E_HOST_FIREBASE_UID: ${{ secrets.E2E_HOST_FIREBASE_UID }}
+      E2E_PENDING_EMAIL: ${{ secrets.E2E_PENDING_EMAIL }}
+      E2E_PENDING_PASSWORD: ${{ secrets.E2E_PENDING_PASSWORD }}
+      E2E_PENDING_FIREBASE_UID: ${{ secrets.E2E_PENDING_FIREBASE_UID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install frontend dependencies
+        run: npm install --prefix frontend
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start netlify dev
+        run: npx netlify dev &
+        # runs in the background; the wait-on step below blocks until it's ready
+
+      - name: Wait for netlify dev to be ready
+        run: npx wait-on http://localhost:8888 --timeout 60000
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

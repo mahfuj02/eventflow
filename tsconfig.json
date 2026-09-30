@@ -11,5 +11,11 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["netlify/functions/**/*.ts", "netlify/functions/**/*.mts", "shared/**/*.ts"]
+  "include": [
+    "netlify/functions/**/*.ts",
+    "netlify/functions/**/*.mts",
+    "shared/**/*.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts"
+  ]
 }

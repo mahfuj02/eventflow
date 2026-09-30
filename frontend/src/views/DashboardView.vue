@@ -152,6 +152,7 @@ function formatRelativeTime(iso: string): string {
       <template v-else-if="guest">
         <div
           v-if="showApprovalCongrats"
+          data-testid="approval-congrats-modal"
           class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
           @click.self="dismissApprovalCongrats"
         >
@@ -196,15 +197,15 @@ function formatRelativeTime(iso: string): string {
             <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div class="rounded-xl border border-card-border bg-white p-5">
                 <p class="text-sm text-ink-soft">Total tickets sold</p>
-                <p class="mt-1 font-serif text-3xl font-semibold text-ink">{{ summary?.totalTicketsSold ?? 0 }}</p>
+                <p data-testid="summary-tickets-sold" class="mt-1 font-serif text-3xl font-semibold text-ink">{{ summary?.totalTicketsSold ?? 0 }}</p>
               </div>
               <div class="rounded-xl border border-card-border bg-white p-5">
                 <p class="text-sm text-ink-soft">Total revenue</p>
-                <p class="mt-1 font-serif text-3xl font-semibold text-ink">{{ formatPrice(summary?.totalRevenue ?? 0) }}</p>
+                <p data-testid="summary-total-revenue" class="mt-1 font-serif text-3xl font-semibold text-ink">{{ formatPrice(summary?.totalRevenue ?? 0) }}</p>
               </div>
               <div class="rounded-xl border border-card-border bg-white p-5">
                 <p class="text-sm text-ink-soft">Active events</p>
-                <p class="mt-1 font-serif text-3xl font-semibold text-ink">{{ summary?.activeEvents ?? 0 }}</p>
+                <p data-testid="summary-active-events" class="mt-1 font-serif text-3xl font-semibold text-ink">{{ summary?.activeEvents ?? 0 }}</p>
               </div>
             </div>
 
@@ -260,13 +261,19 @@ function formatRelativeTime(iso: string): string {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="event in events" :key="event._id" class="border-b border-card-border last:border-0">
+                  <tr
+                    v-for="event in events"
+                    :key="event._id"
+                    :data-testid="`dashboard-event-row-${event._id}`"
+                    class="border-b border-card-border last:border-0"
+                  >
                     <td class="py-3 font-medium text-ink">{{ event.title }}</td>
                     <td class="py-3 text-ink-soft">{{ formatDate(event.startsAt) }}</td>
                     <td class="py-3 text-ink-soft">{{ event.sold }} / {{ event.capacity }}</td>
                     <td class="py-3 text-ink-soft">{{ formatPrice(event.revenue) }}</td>
                     <td class="py-3">
                       <span
+                        data-testid="dashboard-status-pill"
                         class="rounded-full px-2.5 py-0.5 text-xs font-medium"
                         :class="statusBadgeClass(event)"
                       >

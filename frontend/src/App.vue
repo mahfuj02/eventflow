@@ -103,8 +103,13 @@ async function handleResendVerification() {
 
         <div class="flex items-center gap-4 text-sm font-medium">
           <template v-if="currentUser">
-            <RouterLink to="/home" class="text-ink-soft hover:text-ink">My Tickets</RouterLink>
-            <RouterLink v-if="guest?.role === 'host'" to="/dashboard" class="text-ink-soft hover:text-ink">
+            <RouterLink to="/home" data-testid="nav-my-tickets-link" class="text-ink-soft hover:text-ink">My Tickets</RouterLink>
+            <RouterLink
+              v-if="guest?.role === 'host'"
+              to="/dashboard"
+              data-testid="nav-dashboard-link"
+              class="text-ink-soft hover:text-ink"
+            >
               Dashboard
             </RouterLink>
             <span class="text-ink-soft">{{ firstName }}</span>
@@ -112,6 +117,7 @@ async function handleResendVerification() {
             <div ref="dropdownRef" class="relative">
               <button
                 type="button"
+                data-testid="nav-avatar-button"
                 class="flex h-8 w-8 items-center justify-center rounded-full bg-teal text-xs font-semibold text-white"
                 @click="dropdownOpen = !dropdownOpen"
               >
@@ -124,6 +130,7 @@ async function handleResendVerification() {
               >
                 <button
                   type="button"
+                  data-testid="nav-logout-button"
                   class="block w-full px-4 py-2 text-left text-sm text-ink hover:bg-ivory"
                   @click="handleSignOut"
                 >

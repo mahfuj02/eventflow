@@ -6,8 +6,14 @@ frontend/node_modules/
 .env
 .env.local
 .env.*.local
+.env.test
 frontend/.env
 frontend/.env.local
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
 
 # Build output
 dist/

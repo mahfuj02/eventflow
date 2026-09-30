@@ -104,6 +104,7 @@ function fromPrice(event: EventDocument): string {
         <article
           v-for="event in filteredEvents"
           :key="event._id"
+          data-testid="event-card"
           class="flex flex-col overflow-hidden rounded-xl border border-card-border bg-white"
         >
           <img v-if="event.imageUrl" :src="event.imageUrl" alt="" class="h-44 w-full object-cover" />
