@@ -13,6 +13,14 @@ test.describe('Guest to account upgrade', () => {
   })
 
   test('after a real anonymous checkout, the guest can upgrade to a full account', async ({ page, request }) => {
+    // More sequential real-network steps than any other spec (real Stripe
+    // checkout, then a further real page navigation and form submission on
+    // top of that) - the default 30s per-test timeout is comfortable for
+    // every other spec but tight here, especially since this file runs
+    // alphabetically before guest-checkout*.spec.ts and so is often the
+    // first real hit on confirm-order.mts's Netlify Dev cold start too.
+    test.setTimeout(60_000)
+
     const { eventId } = await seedEventWithSales(request, { organizerId: testAccounts.host.firebaseUid() })
     const buyerEmail = `e2e-upgrade-source-${Date.now()}@test.eventflow.dev`
 
