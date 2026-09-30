@@ -22,7 +22,7 @@ test.describe('Host onboarding', () => {
     await page.getByLabel('Email').fill(email)
     await page.getByLabel('Password', { exact: true }).fill('TestPassword123!')
     await page.getByLabel('Confirm password').fill('TestPassword123!')
-    await page.getByRole('button', { name: 'Sign up' }).click()
+    await page.getByRole('button', { name: 'Sign up', exact: true }).click()
     await page.waitForURL('**/home')
 
     await page.goto('/apply-to-host')

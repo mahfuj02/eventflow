@@ -8,6 +8,11 @@ export default defineConfig({
   workers: 1,
   reporter: process.env.CI ? [['html', { open: 'never' }]] : 'list',
   timeout: 30_000,
+  // Netlify Dev bundles each function lazily on its first invocation per
+  // run (esbuild cold start), which can comfortably exceed Playwright's
+  // 5s default on a page's first data fetch. 10s absorbs that without
+  // masking genuine hangs, given the 30s overall test timeout above.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:8888',
     trace: 'retain-on-failure',

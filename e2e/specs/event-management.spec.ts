@@ -35,7 +35,7 @@ test.describe('Event management (host)', () => {
     await page.getByRole('button', { name: 'Create event' }).click()
     await page.waitForURL('**/dashboard')
 
-    await expect(page.getByText('E2E Created Event')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'E2E Created Event', exact: true })).toBeVisible()
   })
 
   test('editing core fields and adding a new ticket type on an event with existing sales', async ({ page, request }) => {

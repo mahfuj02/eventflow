@@ -20,6 +20,11 @@ test.describe('Guest to account upgrade', () => {
     await page.getByTestId(/^ticket-increment-/).first().click()
     await page.getByTestId('checkout-button').click()
     await payWithTestCard(page, buyerEmail)
+    // payWithTestCard only waits for the URL to reach /orders/success - the
+    // page's own confirm-order call (which is what persists buyerEmail onto
+    // the guest doc) is still in flight at that point. Navigating away too
+    // early can cancel that request, leaving the guest doc's email unset.
+    await expect(page.getByTestId('ticket-code-card').first()).toBeVisible()
 
     await page.goto('/home')
     await expect(page.getByTestId('guest-upgrade-banner')).toBeVisible()
