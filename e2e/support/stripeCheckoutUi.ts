@@ -22,9 +22,16 @@ export async function payWithTestCard(page: Page, email: string): Promise<void> 
   if (await zip.isVisible().catch(() => false)) {
     await zip.fill('10001')
   }
-  const phone = page.getByLabel('Phone number', { exact: true })
-  if (await phone.isVisible().catch(() => false)) {
-    await phone.fill('2015550123')
+
+  // Stripe Link's "Save my information for faster checkout" is checked by
+  // default. If a phone number gets filled in while it's on, Link tries to
+  // verify it via an SMS one-time code - a modal that blocks every future
+  // click forever, since there's no real phone to receive the code. Turn
+  // Link off instead of filling the phone field at all; it was never a
+  // required field, only ZIP was.
+  const saveInfo = page.getByRole('checkbox', { name: 'Save my information for faster checkout' })
+  if (await saveInfo.isVisible().catch(() => false)) {
+    await saveInfo.uncheck()
   }
 
   await page.getByRole('button', { name: /pay/i }).click()
