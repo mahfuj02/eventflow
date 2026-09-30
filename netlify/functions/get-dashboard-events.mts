@@ -11,6 +11,7 @@ interface DashboardEventRow {
   capacity: number
   revenue: number
   status: EventStatus
+  isPast: boolean
 }
 
 export default async (req: Request): Promise<Response> => {
@@ -33,6 +34,7 @@ export default async (req: Request): Promise<Response> => {
       .sort({ startsAt: 1 })
       .toArray()
 
+    const now = new Date()
     const rows: DashboardEventRow[] = hostEvents.map((event) => {
       let sold = 0
       let capacity = 0
@@ -50,6 +52,7 @@ export default async (req: Request): Promise<Response> => {
         capacity,
         revenue,
         status: event.status,
+        isPast: new Date(event.endsAt) < now,
       }
     })
 

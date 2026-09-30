@@ -38,6 +38,9 @@ export default async (req: Request): Promise<Response> => {
     if (!event) {
       return new Response('Event not found', { status: 404 })
     }
+    if (new Date(event.endsAt) < new Date()) {
+      return new Response('This event has already ended', { status: 400 })
+    }
 
     const items: { ticketTypeId: string; quantity: number }[] = []
     const lineItems: Array<{

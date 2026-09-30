@@ -107,14 +107,17 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function statusBadgeClass(status: DashboardEventRow['status']): string {
-  if (status === 'published') return 'bg-teal/10 text-teal-dark'
-  if (status === 'cancelled') return 'bg-red-100 text-red-700'
+function statusBadgeClass(event: DashboardEventRow): string {
+  if (event.status === 'cancelled') return 'bg-red-100 text-red-700'
+  if (event.isPast) return 'bg-gray-100 text-gray-600'
+  if (event.status === 'published') return 'bg-teal/10 text-teal-dark'
   return 'bg-gray-100 text-gray-600'
 }
 
-function statusLabel(status: DashboardEventRow['status']): string {
-  return status.charAt(0).toUpperCase() + status.slice(1)
+function statusLabel(event: DashboardEventRow): string {
+  if (event.status === 'cancelled') return 'Cancelled'
+  if (event.isPast) return 'Ended'
+  return event.status.charAt(0).toUpperCase() + event.status.slice(1)
 }
 
 async function handleDelete(eventId: string) {
@@ -265,9 +268,9 @@ function formatRelativeTime(iso: string): string {
                     <td class="py-3">
                       <span
                         class="rounded-full px-2.5 py-0.5 text-xs font-medium"
-                        :class="statusBadgeClass(event.status)"
+                        :class="statusBadgeClass(event)"
                       >
-                        {{ statusLabel(event.status) }}
+                        {{ statusLabel(event) }}
                       </span>
                     </td>
                     <td class="py-3">

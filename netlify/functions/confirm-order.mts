@@ -4,6 +4,7 @@ import type { GuestDocument } from '../../shared/types/guest'
 import type { OrderDocument } from '../../shared/types/order'
 import type { TicketDocument } from '../../shared/types/ticket'
 import { getDb } from './_lib/mongo'
+import { getResend, NOTIFICATION_FROM } from './_lib/resend'
 import { getStripe } from './_lib/stripe'
 import { UnauthorizedError, verifyAuth } from './_lib/verifyAuth'
 
@@ -136,6 +137,39 @@ export default async (req: Request): Promise<Response> => {
         }
         const ticketResult = await tickets.insertOne(ticket)
         createdTickets.push({ ...ticket, _id: ticketResult.insertedId.toString() })
+      }
+    }
+
+    if (buyerEmail && createdTickets.length > 0) {
+      try {
+        const origin = new URL(req.url).origin
+        const ticketTypeNameById = new Map(event.ticketTypes.map((t) => [t.id, t.name]))
+        const ticketLines = createdTickets.map(
+          (t) => `- ${ticketTypeNameById.get(t.ticketTypeId) ?? 'Ticket'}: ${t.code}`,
+        )
+
+        const sendResult = await getResend().emails.send({
+          from: NOTIFICATION_FROM,
+          to: buyerEmail,
+          subject: `Your tickets for ${event.title}`,
+          text: [
+            `You're all set for ${event.title}!`,
+            ``,
+            `${event.venue} · ${new Date(event.startsAt).toLocaleString()}`,
+            ``,
+            `Your ticket code(s):`,
+            ...ticketLines,
+            ``,
+            `View your tickets anytime at ${origin}/home`,
+          ].join('\n'),
+        })
+        if (sendResult.error) {
+          console.error('Failed to send purchase confirmation email:', sendResult.error)
+        } else {
+          console.log('Sent purchase confirmation email:', sendResult.data?.id)
+        }
+      } catch (err) {
+        console.error('Failed to send purchase confirmation email:', err)
       }
     }
 
