@@ -1,5 +1,6 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 import { firebaseApiKey, testAccounts } from './env'
+import { seedGuest } from './seed'
 
 export type TestRole = 'guest' | 'host' | 'pending'
 
@@ -34,13 +35,37 @@ export async function signUpAnonymously(request: APIRequestContext): Promise<{ i
   return (await response.json()) as { idToken: string; localId: string }
 }
 
+// resetTestData() wipes the guests collection before every test, which
+// also wipes the seeded host account's role: 'host' - re-seed it here so
+// every test calling loginAs(page, 'host') can rely on actually landing
+// on /dashboard, without every spec file needing to remember to do this
+// itself. 'pending' is deliberately NOT auto-seeded here: different
+// tests need it in different states (fresh guest vs. just-approved
+// host), so that stays each test's own explicit responsibility.
 export async function loginAs(page: Page, role: TestRole): Promise<void> {
+  if (role === 'host') {
+    const hostAccount = testAccounts[role]
+    await seedGuest(page.request, {
+      firebaseUid: hostAccount.firebaseUid(),
+      email: hostAccount.email,
+      name: 'E2E Host',
+      role: 'host',
+    })
+  }
   const account = testAccounts[role]
-  await page.goto('/login')
-  await page.getByLabel('Email').fill(account.email)
-  await page.getByLabel('Password').fill(account.password())
-  await page.getByRole('button', { name: 'Log in' }).click()
+  await login(page, account.email, account.password())
   await page.waitForURL(role === 'host' ? '**/dashboard' : '**/home')
+}
+
+// Lower-level login with no assumption about where it redirects to -
+// for the rare case where a test's account has been put in a state
+// loginAs()'s hardcoded redirect expectation doesn't match (e.g. the
+// 'pending' account after it's just been approved to host).
+export async function login(page: Page, email: string, password: string): Promise<void> {
+  await page.goto('/login')
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Password').fill(password)
+  await page.getByRole('button', { name: 'Log in' }).click()
 }
 
 export async function logout(page: Page): Promise<void> {

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { getIdToken, loginAs } from '../support/auth'
+import { getIdToken, login, loginAs } from '../support/auth'
 import { testAccounts } from '../support/env'
 import { resetTestData, seedGuest, seedHostApplication } from '../support/seed'
 
@@ -64,7 +64,11 @@ test.describe('Host onboarding', () => {
     })
     expect(approveResponse.ok()).toBeTruthy()
 
-    await loginAs(page, 'pending')
+    // Not loginAs('pending') - that helper assumes a non-host account
+    // still redirects to /home, but this account has just been approved
+    // to host and now redirects to /dashboard instead.
+    await login(page, testAccounts.pending.email, testAccounts.pending.password())
+    await page.waitForURL('**/dashboard')
     await page.goto('/apply-to-host')
     await expect(page.getByTestId('host-application-approved')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Go to dashboard' })).toBeVisible()
