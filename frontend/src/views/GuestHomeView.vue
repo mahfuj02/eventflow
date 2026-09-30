@@ -113,6 +113,7 @@ async function handleCreateAccount() {
 
       <div
         v-if="currentUser?.isAnonymous"
+        data-testid="guest-upgrade-banner"
         class="mt-6 rounded-xl border border-[#F0C978] bg-[#FDF3E0] p-5"
       >
         <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">

@@ -24,7 +24,11 @@ async function handleSubmit() {
   }
 
   await signUp(email.value, password.value)
-  await sendVerificationEmail()
+  try {
+    await sendVerificationEmail()
+  } catch (err) {
+    console.error('Failed to send verification email:', err)
+  }
   await redirectAfterAuth()
 }
 

@@ -65,11 +65,11 @@ async function handleSubmit() {
 
       <template v-else-if="existingApplication">
         <div class="mt-8 rounded-xl border border-card-border bg-white p-6">
-          <p v-if="existingApplication.status === 'pending'" class="text-ink">
+          <p v-if="existingApplication.status === 'pending'" data-testid="host-application-pending" class="text-ink">
             Your application is under review. We'll be in touch once it's approved.
           </p>
           <template v-else-if="existingApplication.status === 'approved'">
-            <p class="text-ink">
+            <p data-testid="host-application-approved" class="text-ink">
               You're approved to host on EventFlow! Head to your dashboard to create your first
               event.
             </p>
@@ -80,13 +80,18 @@ async function handleSubmit() {
               Go to dashboard
             </RouterLink>
           </template>
-          <p v-else class="text-ink">
+          <p v-else data-testid="host-application-rejected" class="text-ink">
             Your application wasn't approved. Contact us if you have questions.
           </p>
         </div>
       </template>
 
-      <form v-else class="mt-8 rounded-xl border border-card-border bg-white p-6 sm:p-8" @submit.prevent="handleSubmit">
+      <form
+        v-else
+        data-testid="host-application-form"
+        class="mt-8 rounded-xl border border-card-border bg-white p-6 sm:p-8"
+        @submit.prevent="handleSubmit"
+      >
         <h2 class="text-xs font-semibold tracking-wide text-teal">ORGANIZATION</h2>
         <label class="mt-4 block text-sm font-medium text-ink">
           Organization or business name

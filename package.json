@@ -4,15 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:e2e": "dotenv -e .env.test -e .env -- netlify dev",
+    "test:e2e": "dotenv -e .env.test -e .env -- playwright test",
+    "test:e2e:ui": "dotenv -e .env.test -e .env -- playwright test --ui"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.3",
-    "typescript": "^7.0.2"
+    "dotenv-cli": "^11.0.0",
+    "netlify-cli": "^27.10.2",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.5.1"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",

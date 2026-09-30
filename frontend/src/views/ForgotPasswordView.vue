@@ -7,7 +7,14 @@ const sent = ref(false)
 const { resetPassword, error } = useAuth()
 
 async function handleSubmit() {
-  await resetPassword(email.value)
+  // Show the same confirmation regardless of outcome - both to avoid
+  // leaking which emails have accounts, and so a transient send failure
+  // doesn't strand the user with no feedback at all.
+  try {
+    await resetPassword(email.value)
+  } catch (err) {
+    console.error('Failed to send password reset email:', err)
+  }
   sent.value = true
 }
 </script>
