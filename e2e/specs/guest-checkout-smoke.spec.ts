@@ -25,7 +25,11 @@ test.describe('Guest checkout (real Stripe UI smoke test)', () => {
     await page.getByTestId(/^ticket-increment-/).first().click()
     await page.getByTestId('checkout-button').click()
 
-    await payWithTestCard(page, 'e2e-smoke@test.eventflow.dev')
+    // A unique email each run, not a fixed one - Stripe Link remembers an
+    // email server-side once "Save my information" has ever been checked
+    // for it, and will then force a "confirm it's you" step on every later
+    // checkout regardless of that checkbox's state on the later attempt.
+    await payWithTestCard(page, `e2e-smoke-${Date.now()}@test.eventflow.dev`)
 
     await expect(page.getByTestId('ticket-code-card')).toBeVisible()
     await expect(page.getByText("You're all set!")).toBeVisible()

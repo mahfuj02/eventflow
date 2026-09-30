@@ -35,5 +35,19 @@ export async function payWithTestCard(page: Page, email: string): Promise<void> 
   }
 
   await page.getByRole('button', { name: /pay/i }).click()
+
+  // Stripe Link can still force a "Confirm it's you" one-time-code step
+  // after clicking Pay if it recognizes the email from a previous run
+  // (server-side, independent of the "save my information" checkbox on
+  // THIS attempt) - a defensive backstop alongside using a unique email
+  // per run. Test mode never actually sends a code and always accepts
+  // 000000, per the dialog's own on-screen instructions.
+  const linkVerification = page.getByText("Confirm it's you")
+  if (await linkVerification.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    for (let i = 1; i <= 6; i++) {
+      await page.getByLabel(`Security code character ${i}`).fill('0')
+    }
+  }
+
   await page.waitForURL(/\/orders\/success\?session_id=/, { timeout: 30_000 })
 }
