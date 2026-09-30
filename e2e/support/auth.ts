@@ -21,20 +21,6 @@ export async function getIdToken(request: APIRequestContext, role: TestRole): Pr
   return body.idToken
 }
 
-// Same signInAnonymously() the app itself uses, called directly via
-// Firebase's REST API so API-shortcut tests can authenticate without a
-// browser at all.
-export async function signUpAnonymously(request: APIRequestContext): Promise<{ idToken: string; localId: string }> {
-  const response = await request.post(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseApiKey()}`,
-    { data: { returnSecureToken: true } },
-  )
-  if (!response.ok()) {
-    throw new Error(`Anonymous sign-up failed: ${response.status()} ${await response.text()}`)
-  }
-  return (await response.json()) as { idToken: string; localId: string }
-}
-
 // resetTestData() wipes the guests collection before every test, which
 // also wipes the seeded host account's role: 'host' - re-seed it here so
 // every test calling loginAs(page, 'host') can rely on actually landing

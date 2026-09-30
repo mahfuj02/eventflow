@@ -55,9 +55,7 @@ the e2e suite; use plain `netlify dev` for normal app development.
 Playwright process itself (not just the app under test) needs
 `.env.test`'s `E2E_*` values directly, since `support/env.ts` and
 `support/auth.ts` read them via `process.env` to log in and seed data,
-and `support/stripe.ts` needs the real `.env`'s `STRIPE_SECRET_KEY` to
-confirm payments via the API shortcut. Plain `npx playwright test`
-(without the npm script) won't have any of these set.
+Plain `npx playwright test` (without the npm script) won't have these set.
 
 `npm run test:e2e:ui` opens Playwright's interactive UI mode instead,
 useful while writing or debugging a test.
@@ -66,13 +64,17 @@ useful while writing or debugging a test.
 
 - **Real**: Firebase Auth, MongoDB (a real, separate `eventflow_test`
   database), Cloudinary uploads, the actual `netlify dev` server.
-- **Shortcut**: most Stripe Checkout flows confirm payment via a direct
-  API call (`support/stripe.ts`) instead of driving Stripe's hosted page.
-  Two tests (`guest-checkout-smoke.spec.ts`,
-  `guest-account-upgrade.spec.ts`) deliberately drive the real hosted
-  Checkout page with the standard `4242 4242 4242 4242` test card — if
-  Stripe changes that page's structure, only `support/stripeCheckoutUi.ts`
-  and those two specs should need updating.
+- **No API shortcut for Stripe payment**: originally planned (create a
+  Checkout Session via API, then confirm its PaymentIntent directly with
+  no browser), but Stripe doesn't create a Checkout Session's
+  PaymentIntent until a real client confirms the session (API version
+  2022-08-01+) — there's no supported server-only way to mark a hosted
+  Checkout Session paid. Every test needing a completed purchase
+  (`guest-checkout.spec.ts`, `guest-checkout-smoke.spec.ts`,
+  `guest-account-upgrade.spec.ts`) drives the real hosted Checkout page
+  with the standard `4242 4242 4242 4242` test card via
+  `support/stripeCheckoutUi.ts`. If Stripe changes that page's structure,
+  only that file and those three specs should need updating.
 - **Not automated at all**: Google sign-in (real OAuth popup). Manual
   test only.
 

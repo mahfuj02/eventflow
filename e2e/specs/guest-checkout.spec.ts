@@ -1,54 +1,42 @@
 import { test, expect } from '@playwright/test'
-import { signUpAnonymously } from '../support/auth'
 import { testAccounts } from '../support/env'
 import { resetTestData, seedEventWithSales } from '../support/seed'
-import { extractSessionIdFromUrl, markCheckoutSessionPaid } from '../support/stripe'
+import { payWithTestCard } from '../support/stripeCheckoutUi'
 
-// API-shortcut coverage: bypasses Stripe's hosted UI by confirming the
-// PaymentIntent directly, and bypasses the browser entirely by calling
-// Netlify Functions straight with a REST-issued Firebase token. The real
-// browser + real Stripe UI path is covered separately by the smoke test
-// in guest-checkout-smoke.spec.ts.
-test.describe('Guest checkout (API shortcut)', () => {
+// Real browser + real Stripe UI, same as guest-checkout-smoke.spec.ts - not
+// an "API shortcut" test. Stripe doesn't create a Checkout Session's
+// PaymentIntent until a real client confirms the session (API version
+// 2022-08-01+), so there's no supported way to mark a hosted Checkout
+// Session paid without driving Stripe's actual page. What's distinct here
+// from the smoke test: buying more than one of the same ticket type, and
+// confirming confirm-order.mts is idempotent on a page reload.
+test.describe('Guest checkout (multiple tickets, real Stripe UI)', () => {
   test.beforeEach(async ({ request }) => {
     await resetTestData(request)
   })
 
-  test('paying for multiple ticket types produces the right orders and ticket codes', async ({ request }) => {
-    const { eventId, ticketTypeId } = await seedEventWithSales(request, {
-      organizerId: testAccounts.host.firebaseUid(),
-    })
-    const { idToken } = await signUpAnonymously(request)
+  test('buying two tickets produces two codes, and reconfirming on reload is idempotent', async ({
+    page,
+    request,
+  }) => {
+    await seedEventWithSales(request, { organizerId: testAccounts.host.firebaseUid() })
 
-    const sessionResponse = await request.post('/.netlify/functions/create-checkout-session', {
-      data: { eventId, items: [{ ticketTypeId, quantity: 2 }] },
-      headers: { Authorization: `Bearer ${idToken}` },
-    })
-    expect(sessionResponse.ok()).toBeTruthy()
-    const { url } = (await sessionResponse.json()) as { url: string }
-    const sessionId = extractSessionIdFromUrl(url)
+    await page.goto('/')
+    await page.getByTestId('event-card').getByText('View event →').click()
+    await page.getByTestId(/^ticket-increment-/).first().click()
+    await page.getByTestId(/^ticket-increment-/).first().click()
+    await page.getByTestId('checkout-button').click()
 
-    await markCheckoutSessionPaid(sessionId)
+    await payWithTestCard(page, `e2e-checkout-${Date.now()}@test.eventflow.dev`)
 
-    const confirmResponse = await request.get(
-      `/.netlify/functions/confirm-order?session_id=${sessionId}`,
-      { headers: { Authorization: `Bearer ${idToken}` } },
-    )
-    expect(confirmResponse.ok()).toBeTruthy()
-    const confirmed = (await confirmResponse.json()) as { orders: unknown[]; tickets: { code: string }[] }
-    expect(confirmed.orders).toHaveLength(1)
-    expect(confirmed.tickets).toHaveLength(2)
-    for (const ticket of confirmed.tickets) {
-      expect(ticket.code).toBeTruthy()
-    }
+    await expect(page.getByTestId('ticket-code-card')).toHaveCount(2)
+    const codes = await page.getByTestId('ticket-code-card').allTextContents()
 
-    // Calling confirm-order again (as if the success page reloaded) must
-    // be idempotent - same tickets, not duplicated.
-    const secondConfirm = await request.get(
-      `/.netlify/functions/confirm-order?session_id=${sessionId}`,
-      { headers: { Authorization: `Bearer ${idToken}` } },
-    )
-    const secondBody = (await secondConfirm.json()) as { tickets: { code: string }[] }
-    expect(secondBody.tickets.map((t) => t.code).sort()).toEqual(confirmed.tickets.map((t) => t.code).sort())
+    // As if the success page reloaded - confirm-order must be idempotent:
+    // same tickets returned, nothing duplicated.
+    await page.reload()
+    await expect(page.getByTestId('ticket-code-card')).toHaveCount(2)
+    const codesAfterReload = await page.getByTestId('ticket-code-card').allTextContents()
+    expect(codesAfterReload).toEqual(codes)
   })
 })
