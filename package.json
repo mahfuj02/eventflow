@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:e2e": "dotenv -e .env.test -e .env -- netlify dev",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e": "dotenv -e .env.test -e .env -- playwright test",
+    "test:e2e:ui": "dotenv -e .env.test -e .env -- playwright test --ui"
   },
   "keywords": [],
   "author": "",

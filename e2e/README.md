@@ -51,6 +51,14 @@ load together — `netlify dev` alone only ever reads `.env`, never
 instead. Use `npm run dev:e2e` specifically whenever you intend to run
 the e2e suite; use plain `netlify dev` for normal app development.
 
+`npm run test:e2e` is *also* wrapped in `dotenv-cli` the same way — the
+Playwright process itself (not just the app under test) needs
+`.env.test`'s `E2E_*` values directly, since `support/env.ts` and
+`support/auth.ts` read them via `process.env` to log in and seed data,
+and `support/stripe.ts` needs the real `.env`'s `STRIPE_SECRET_KEY` to
+confirm payments via the API shortcut. Plain `npx playwright test`
+(without the npm script) won't have any of these set.
+
 `npm run test:e2e:ui` opens Playwright's interactive UI mode instead,
 useful while writing or debugging a test.
 
