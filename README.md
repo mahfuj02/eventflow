@@ -1,5 +1,9 @@
 # EventFlow
 
+[![E2E tests](https://github.com/mahfuj02/eventflow/actions/workflows/e2e.yml/badge.svg)](https://github.com/mahfuj02/eventflow/actions/workflows/e2e.yml)
+
+**Live demo:** https://eventflow-mahfuj.netlify.app
+
 A scoped clone of a 3Common-style event-ticketing platform — browse events,
 buy tickets through Stripe, and manage events from a host dashboard. Built
 as a portfolio project to get hands-on with a full serverless stack: Vue 3,
@@ -14,7 +18,8 @@ Netlify Functions, MongoDB, Firebase Auth, and Stripe.
   guest checkout that can later be upgraded to a full account)
 - **Payments**: Stripe Checkout (test mode)
 - **File uploads**: Cloudinary (event banner images)
-- **Email**: Resend (host application notifications and approvals)
+- **Email**: Resend (host application notifications/approvals, and
+  purchase-confirmation emails with ticket codes)
 
 ## Features
 
@@ -33,6 +38,12 @@ Netlify Functions, MongoDB, Firebase Auth, and Stripe.
   (with guardrails once tickets have sold), including an optional banner
   image upload
 - Per-event guest lists for hosts
+- Past-event handling: excluded from public browsing, shown on the host
+  dashboard with an "Ended" badge, checkout blocked server-side, and a
+  "You might also like" panel in place of the ticket selector on an ended
+  event's detail page
+- Purchase-confirmation email with ticket codes, sent once checkout
+  completes
 
 ## Project structure
 
@@ -41,6 +52,7 @@ frontend/             Vue 3 + TypeScript SPA
 netlify/functions/     One Netlify Function per endpoint (flat, no framework)
   _lib/                Shared helpers (Mongo, Stripe, Cloudinary, Resend, auth)
 shared/types/          TypeScript types shared between frontend and functions
+e2e/                   Playwright end-to-end test suite
 design/                Mockups used as visual reference during development
 ```
 
@@ -63,6 +75,22 @@ account, and a free Resend account.
    ```
    netlify dev
    ```
+
+## Testing
+
+A Playwright end-to-end suite covers the main user journeys — auth, guest
+and host checkout (both a direct API path and the real Stripe Checkout UI),
+host onboarding, event management, dashboard correctness, past-event
+behavior, and nav consistency — run against a real `netlify dev` instance
+and a separate MongoDB test database, not mocks.
+
+```
+npm run test:e2e
+```
+
+See [`e2e/README.md`](e2e/README.md) for one-time setup (Firebase test
+accounts, `.env.test`, etc.). The same suite also runs automatically on
+every pull request via GitHub Actions (`.github/workflows/e2e.yml`).
 
 ## Deployment
 
